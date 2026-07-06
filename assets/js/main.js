@@ -272,6 +272,7 @@ function bindEvents() {
   elements.todayPlanLog?.addEventListener("click", handleTodayPlanLog);
   elements.todayPlanAlternative?.addEventListener("click", handleTodayPlanAlternative);
   elements.todayPlanAlternatives?.addEventListener("click", handleTodayPlanAlternativeRailClick);
+  elements.recommendations?.addEventListener("click", handleGuidedCardAlternativeRailClick);
   elements.todayPlanSkip?.addEventListener("click", handleTodayPlanSkip);
   elements.todayPlanRefresh?.addEventListener("click", handleTodayPlanRefresh);
   elements.logForm.addEventListener("submit", handleLogFormSubmit);
@@ -880,28 +881,15 @@ function renderTodayPlanAlternatives(currentStep) {
     return;
   }
 
-  const alternatives = currentStep?.alternativeOptions || [];
-  elements.todayPlanAlternatives.hidden = alternatives.length === 0;
-  if (alternatives.length === 0) {
-    elements.todayPlanAlternatives.innerHTML = "";
-    return;
-  }
-
-  elements.todayPlanAlternatives.innerHTML = alternatives
-    .map((option, index) => `
-      <button class="alt-swap-card" type="button" data-alt-index="${index}">
-        <strong>${escapeHtml(option.title)}</strong>
-        <span>${escapeHtml(buildMachineActionSummary(option, pickPrimaryMuscle(option.muscleGroups)))}</span>
-        <span>${escapeHtml(option.prescription || formatSuggestedWeightCompact(option) || "Canvia aquesta maquina")}</span>
-      </button>
-    `)
-    .join("");
+  elements.todayPlanAlternatives.hidden = true;
+  elements.todayPlanAlternatives.innerHTML = "";
 }
 
 function buildGuidedPlanCard(step, isCurrent) {
   const fragment = buildCard(step, { hiddenMode: false, showPrescription: true, readOnly: true });
   const card = fragment.querySelector(".machine-card");
   const body = fragment.querySelector(".machine-card__body");
+  const actions = body.querySelector(".machine-card__actions");
   const metaRow = document.createElement("div");
   metaRow.className = "tag-row";
   metaRow.innerHTML = [
@@ -912,10 +900,19 @@ function buildGuidedPlanCard(step, isCurrent) {
       ? `<span class="tag">Fet</span>`
       : step.status === "skipped"
         ? `<span class="tag">Saltat</span>`
-        : `<span class="tag">${step.alternativeOptions?.length || 0} alternatives</span>`
+        : `<span class="tag">${step.alternativeOptions?.length || 0} alternatives disponibles</span>`
   ].join("");
   body.insertBefore(metaRow, body.querySelector(".machine-card__description"));
+  const alternativesRail = buildGuidedPlanAlternativeRail(step);
+  if (alternativesRail) {
+    if (actions) {
+      body.insertBefore(alternativesRail, actions);
+    } else {
+      body.append(alternativesRail);
+    }
+  }
   card.classList.add("machine-card--guided");
+  card.dataset.guidedStepPosition = String(step.position);
   if (isCurrent) {
     card.classList.add("machine-card--current");
   }
@@ -926,6 +923,28 @@ function buildGuidedPlanCard(step, isCurrent) {
     card.classList.add("machine-card--skipped");
   }
   return fragment;
+}
+
+function buildGuidedPlanAlternativeRail(step) {
+  if (step.status === "done" || step.status === "skipped" || !step.alternativeOptions?.length) {
+    return null;
+  }
+
+  const rail = document.createElement("div");
+  rail.className = "machine-card__alternatives";
+  rail.innerHTML = `
+    <div class="machine-card__alternatives-label">Alternatives d'aquest pas</div>
+    <div class="alt-swap-list alt-swap-list--embedded" data-guided-step-position="${step.position}">
+      ${step.alternativeOptions.map((option, index) => `
+        <button class="alt-swap-card alt-swap-card--compact" type="button" data-guided-step-position="${step.position}" data-guided-alt-index="${index}">
+          <strong>${escapeHtml(option.title)}</strong>
+          <span>${escapeHtml(buildMachineActionSummary(option, pickPrimaryMuscle(option.muscleGroups)))}</span>
+          <span>${escapeHtml(option.prescription || formatSuggestedWeightCompact(option) || "Canvia aquesta maquina")}</span>
+        </button>
+      `).join("")}
+    </div>
+  `;
+  return rail;
 }
 
 function pickAlternativeExercises(exercise, recommendationPool, selectedIds) {
@@ -2493,16 +2512,18 @@ async function handleTodayPlanLog() {
 }
 
 async function handleTodayPlanAlternative() {
-  if (elements.todayPlanAlternatives && !elements.todayPlanAlternatives.hidden) {
-    elements.todayPlanAlternatives.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-    elements.todayPlanAlternatives.querySelector("[data-alt-index]")?.focus();
-    return;
-  }
-
   const activeSession = await ensureGuidedPlanSession();
   const plan = activeSession?.guidedPlan;
   const currentStep = getCurrentGuidedStep(plan);
   if (!activeSession || !plan || !currentStep || !currentStep.alternativeOptions?.length) {
+    return;
+  }
+
+  renderAll();
+  const currentCardAlternative = elements.recommendations?.querySelector(`.machine-card[data-guided-step-position="${currentStep.position}"] [data-guided-alt-index]`);
+  if (currentCardAlternative) {
+    currentCardAlternative.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    currentCardAlternative.focus();
     return;
   }
 
@@ -2524,6 +2545,28 @@ async function handleTodayPlanAlternativeRailClick(event) {
 
   const alternativeIndex = Number(button.dataset.altIndex || 0);
   await applyGuidedAlternativeSwap(activeSession, currentStep, alternativeIndex);
+}
+
+async function handleGuidedCardAlternativeRailClick(event) {
+  const button = event.target.closest("[data-guided-step-position][data-guided-alt-index]");
+  if (!button) {
+    return;
+  }
+
+  const activeSession = await ensureGuidedPlanSession();
+  const plan = activeSession?.guidedPlan;
+  if (!activeSession || !plan) {
+    return;
+  }
+
+  const stepPosition = Number(button.dataset.guidedStepPosition || 0);
+  const alternativeIndex = Number(button.dataset.guidedAltIndex || 0);
+  const targetStep = plan.steps.find((entry) => entry.position === stepPosition);
+  if (!targetStep) {
+    return;
+  }
+
+  await applyGuidedAlternativeSwap(activeSession, targetStep, alternativeIndex);
 }
 
 async function ensureGuidedPlanSession() {
@@ -3011,7 +3054,7 @@ function renderBalanceMap() {
   });
 
   if (allRegion) {
-    allRegion.style.opacity = available > 0 ? "0.16" : "0";
+    allRegion.style.opacity = available > 0 ? "0.42" : "0.28";
   }
 
   const ranked = Object.entries(scores)
@@ -3365,6 +3408,11 @@ async function loadBodyMap() {
       svg.classList.add("body-map");
       svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
       svg.setAttribute("focusable", "false");
+      svg.style.background = "transparent";
+      const baseImage = svg.querySelector("#base_png");
+      if (baseImage) {
+        baseImage.classList.add("body-map__base");
+      }
     }
   } catch (error) {
     console.error(error);
