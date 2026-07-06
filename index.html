@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0f1113">
+    <meta name="description" content="PWA estatica per explorar el cataleg d'F&H Fitness, descarregar-lo al dispositiu i rebre recomanacions per grup muscular.">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="assets/icons/icon-192.png" sizes="192x192">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <script defer src="assets/js/shell-ui.js"></script>
+    <script defer src="assets/vendor/alpinejs-3.14.9.min.js"></script>
+    <link rel="stylesheet" href="assets/styles.css">
+    <title>GymBro's</title>
+  </head>
+  <body>
+    <div class="page-shell" x-data="shellUi()" x-effect="document.body.classList.toggle('nav-open', navOpen)" @keydown.escape.window="closeNav()">
+      <div class="shell-bar">
+        <button id="nav-toggle" x-ref="navToggle" class="nav-toggle" type="button" :aria-expanded="String(navOpen)" aria-controls="app-nav" aria-label="Obre el menu" @click="openNav()">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="shell-bar__copy">
+          <p class="shell-bar__label">Menu</p>
+          <strong id="current-section-label" x-text="currentSectionLabel">Comencar</strong>
+        </div>
+      </div>
+      <div id="nav-scrim" class="nav-scrim" x-cloak x-show="navOpen" @click="closeNav()"></div>
+
+      <header class="hero" :class="{ 'hero--compact': !isActive('section-discover') }" :inert="navOpen ? '' : null" :aria-hidden="navOpen ? 'true' : 'false'">
+        <div class="hero__copy">
+          <h1>GymBro's</h1>
+          <p class="hero__lede">Entrena, registra i mantingues l'historic al dispositiu.</p>
+          <div class="hero__actions">
+            <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Comenca entrenament</button>
+            <button id="sync-button" class="button button--secondary" type="button">Sincronitza cataleg</button>
+            <button id="cache-images-button" class="button button--ghost" type="button">Precarrega imatges</button>
+          </div>
+          <div class="hero__meta">
+            <span id="catalog-status" class="status-pill">Sense sincronitzar</span>
+            <span id="offline-status" class="status-pill status-pill--dark">Preparant mode offline</span>
+          </div>
+        </div>
+        <aside class="hero__panel">
+          <h2>Mode local</h2>
+          <p class="hero__steps">Sincronitza el cataleg quan el necessitis. Les sessions, els pesos i les imatges queden al dispositiu.</p>
+          <p id="progress-text" class="progress-copy">Obre propostes o sense maquines per fer el primer exercici.</p>
+          <div class="progress-bar" aria-hidden="true">
+            <div id="progress-fill" class="progress-bar__fill"></div>
+          </div>
+        </aside>
+      </header>
+
+      <div class="app-shell">
+        <aside id="app-nav" x-ref="drawer" class="app-nav" :class="{ 'is-open': navOpen }" :aria-hidden="navOpen ? 'false' : 'true'" :inert="navOpen ? null : ''" aria-label="Menu lateral">
+          <div class="app-nav__head">
+            <div>
+              <p class="app-nav__label">GymBro's</p>
+              <strong class="app-nav__title">Seccions</strong>
+            </div>
+            <button id="nav-close" class="app-nav__close button button--ghost" type="button" aria-label="Tanca el menu" @click="closeNav()">Tanca</button>
+          </div>
+          <div class="app-nav__group">
+            <p class="app-nav__label">Descobreix</p>
+            <a class="app-nav__link" href="#section-discover" data-section-target="section-discover" :class="{ 'is-active': isActive('section-discover') }" :aria-current="isActive('section-discover') ? 'page' : null" @click.prevent="goTo('section-discover')">Comencar</a>
+            <a class="app-nav__link" href="#section-recommendations" data-section-target="section-recommendations" :class="{ 'is-active': isActive('section-recommendations') }" :aria-current="isActive('section-recommendations') ? 'page' : null" @click.prevent="goTo('section-recommendations')">Entrenament d'avui</a>
+            <a class="app-nav__link" href="#section-bodyweight" data-section-target="section-bodyweight" :class="{ 'is-active': isActive('section-bodyweight') }" :aria-current="isActive('section-bodyweight') ? 'page' : null" @click.prevent="goTo('section-bodyweight')">Sense maquines</a>
+            <a class="app-nav__link" href="#section-catalog" data-section-target="section-catalog" :class="{ 'is-active': isActive('section-catalog') }" :aria-current="isActive('section-catalog') ? 'page' : null" @click.prevent="goTo('section-catalog')">Cataleg</a>
+          </div>
+          <div class="app-nav__group">
+            <p class="app-nav__label">Planifica</p>
+            <a class="app-nav__link" href="#section-planner" data-section-target="section-planner" :class="{ 'is-active': isActive('section-planner') }" :aria-current="isActive('section-planner') ? 'page' : null" @click.prevent="goTo('section-planner')">Pla setmanal</a>
+            <a class="app-nav__link" href="#section-hidden" data-section-target="section-hidden" :class="{ 'is-active': isActive('section-hidden') }" :aria-current="isActive('section-hidden') ? 'page' : null" @click.prevent="goTo('section-hidden')">Configura el teu gimnas</a>
+          </div>
+          <div class="app-nav__group">
+            <p class="app-nav__label">Registra</p>
+            <a class="app-nav__link" href="#section-timers" data-section-target="section-timers" :class="{ 'is-active': isActive('section-timers') }" :aria-current="isActive('section-timers') ? 'page' : null" @click.prevent="goTo('section-timers')">Cronometres</a>
+            <a class="app-nav__link" href="#section-log" data-section-target="section-log" :class="{ 'is-active': isActive('section-log') }" :aria-current="isActive('section-log') ? 'page' : null" @click.prevent="goTo('section-log')">Registre manual</a>
+            <a class="app-nav__link" href="#section-session" data-section-target="section-session" :class="{ 'is-active': isActive('section-session') }" :aria-current="isActive('section-session') ? 'page' : null" @click.prevent="goTo('section-session')">Sessio activa</a>
+          </div>
+          <div class="app-nav__group">
+            <p class="app-nav__label">Analitza</p>
+            <a class="app-nav__link" href="#section-weekly" data-section-target="section-weekly" :class="{ 'is-active': isActive('section-weekly') }" :aria-current="isActive('section-weekly') ? 'page' : null" @click.prevent="goTo('section-weekly')">Cobertura setmanal</a>
+            <a class="app-nav__link" href="#section-history" data-section-target="section-history" :class="{ 'is-active': isActive('section-history') }" :aria-current="isActive('section-history') ? 'page' : null" @click.prevent="goTo('section-history')">Historic i cos</a>
+          </div>
+        </aside>
+
+      <main class="layout" :inert="navOpen ? '' : null" :aria-hidden="navOpen ? 'true' : 'false'">
+        <section id="section-discover" class="panel panel--filters" x-cloak x-show="isActive('section-discover')">
+          <div class="panel__header">
+            <div>
+              <h2>Comenca</h2>
+            </div>
+            <label class="search">
+              <span class="visually-hidden">Buscar maquina</span>
+              <input id="search-input" type="search" placeholder="Buscar per nom, etiqueta o serie">
+            </label>
+          </div>
+          <article id="first-use-wizard" class="session-card" hidden>
+            <h3 class="subheading">Comenca aqui</h3>
+            <p id="first-use-copy" class="summary-text">Tria la via mes rapida per arribar al primer exercici.</p>
+            <div class="machine-card__actions">
+              <button class="button button--primary" type="button" data-first-use-action="bodyweight">Sense maquines</button>
+              <button class="button button--secondary" type="button" data-first-use-action="recommendations">Veure propostes</button>
+              <button class="button button--ghost" type="button" data-first-use-action="gym">Configura el teu gimnas</button>
+              <button class="button button--ghost" type="button" data-first-use-action="dismiss">Omet</button>
+            </div>
+          </article>
+          <div id="muscle-filters" class="chip-row"></div>
+          <div class="toolbar">
+            <label class="toolbar__field">
+              <span>Tipus</span>
+              <select id="equipment-filter">
+                <option value="all">Tot</option>
+                <option value="machine">Maquines</option>
+                <option value="free-weight">Pes lliure</option>
+                <option value="bodyweight">Sense maquines</option>
+                <option value="support">Suport i entrenament</option>
+              </select>
+            </label>
+            <label class="toolbar__field">
+              <span>Ordenacio</span>
+              <select id="sort-filter">
+                <option value="recommended">Recomanat</option>
+                <option value="title">Nom</option>
+                <option value="series">Serie</option>
+              </select>
+            </label>
+          </div>
+          <div class="machine-card__actions">
+            <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Veure propostes</button>
+            <button class="button button--ghost" type="button" @click="goTo('section-bodyweight')">Entrenar sense material</button>
+          </div>
+        </section>
+
+        <section id="section-recommendations" class="panel" x-cloak x-show="isActive('section-recommendations')">
+          <div class="panel__header">
+            <div>
+              <h2>Propostes per avui</h2>
+            </div>
+            <p id="summary-text" class="summary-text">Pots comencar sense sincronitzar amb exercicis sense maquina.</p>
+          </div>
+          <div id="today-plan-panel" class="session-card session-card--guided">
+            <div class="panel__header panel__header--tight">
+              <div>
+                <h3 class="subheading">Sessio guiada</h3>
+                <p id="today-plan-summary" class="summary-text">Tria zona, objectiu i temps. GymBro's et proposa l'ordre de la sessio.</p>
+              </div>
+            </div>
+            <div id="today-plan-current" class="history-item">
+              <strong>Encara no hi ha sessio carregada</strong>
+              <span>Genera la sessio d'avui per veure el primer pas.</span>
+            </div>
+            <div id="today-plan-actions" class="machine-card__actions">
+              <button id="today-plan-start" class="button button--primary" type="button">Comenca sessio guiada</button>
+              <button id="today-plan-log" class="button button--secondary" type="button">Registrar pas actual</button>
+              <button id="today-plan-alternative" class="button button--ghost" type="button">Maquina ocupada</button>
+              <button id="today-plan-skip" class="button button--ghost" type="button">Saltar pas</button>
+              <button id="today-plan-refresh" class="button button--ghost" type="button">Recalcula</button>
+            </div>
+          </div>
+          <div id="recommendations" class="card-grid card-grid--compact"></div>
+        </section>
+
+        <section id="section-weekly" class="panel" x-cloak x-show="isActive('section-weekly')">
+          <div class="panel__header">
+            <div>
+              <h2>Cobertura setmanal</h2>
+            </div>
+            <p id="weekly-status" class="summary-text">Encara no hi ha activitat registrada aquesta setmana.</p>
+          </div>
+          <div id="weekly-alert" class="weekly-alert"></div>
+          <div id="weekly-muscle-grid" class="weekly-muscle-grid"></div>
+          <div id="weekly-insights" class="history-list"></div>
+          <div class="panel__footer-actions">
+            <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Veure propostes</button>
+            <button class="button button--ghost" type="button" @click="goTo('section-log')">Registre manual</button>
+          </div>
+        </section>
+
+        <section id="section-planner" class="panel" x-cloak x-show="isActive('section-planner')">
+          <div class="panel__header">
+            <div>
+              <h2>Planificacio setmanal</h2>
+            </div>
+            <p id="planner-status" class="summary-text">Crea exercicis propis i assigna'ls a un dia de la setmana o a un bloc A/B/C.</p>
+          </div>
+          <div class="panel__footer-actions panel__footer-actions--top">
+            <button class="button button--primary" type="button" data-scroll-target="planner-form-card">Afegir exercici</button>
+            <button class="button button--ghost" type="button" data-scroll-target="planner-list-card">Veure dies</button>
+          </div>
+          <div class="session-layout session-layout--planner">
+            <div id="planner-list-card" class="session-card session-card--planner-list">
+              <h3 class="subheading">Dies i exercicis</h3>
+              <div id="routine-day-grid" class="routine-day-grid"></div>
+            </div>
+            <div id="planner-form-card" class="session-card session-card--planner-form">
+              <h3 class="subheading">Afegir exercici</h3>
+              <form id="exercise-form" class="planner-form">
+                <label class="toolbar__field">
+                  <span>Dia</span>
+                  <select id="exercise-day" name="dayId"></select>
+                </label>
+                <label class="toolbar__field">
+                  <span>Nom</span>
+                  <input name="name" type="text" required placeholder="Ex. Flexions inclinades">
+                </label>
+                <label class="toolbar__field">
+                  <span>Zona / maquina</span>
+                  <input name="gymArea" type="text" placeholder="Ex. Pes corporal, banda, banc">
+                </label>
+                <label class="toolbar__field">
+                  <span>Grup principal</span>
+                  <select id="exercise-primary-muscle" name="primaryMuscle"></select>
+                </label>
+                <label class="toolbar__field">
+                  <span>Secundaris</span>
+                  <select id="exercise-secondary-muscles" name="secondaryMuscles" multiple size="4"></select>
+                </label>
+                <div class="planner-form__row">
+                  <label class="toolbar__field">
+                    <span>Series</span>
+                    <input name="sets" type="text" placeholder="3">
+                  </label>
+                  <label class="toolbar__field">
+                    <span>Reps</span>
+                    <input name="reps" type="text" placeholder="8-12">
+                  </label>
+                  <label class="toolbar__field">
+                    <span>Pes kg</span>
+                    <input name="weightKg" type="number" step="0.5" min="0" placeholder="0">
+                  </label>
+                </div>
+                <label class="toolbar__field">
+                  <span>Notes</span>
+                  <textarea name="notes" rows="3" placeholder="Tecnica, descans, cues..."></textarea>
+                </label>
+                <button class="button button--primary" type="submit">Guardar al pla</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-bodyweight" class="panel" x-cloak x-show="isActive('section-bodyweight')">
+          <div class="panel__header">
+            <div>
+              <h2>Sense maquines</h2>
+            </div>
+            <p id="bodyweight-summary" class="summary-text">Exercicis sense maquines llestos per al primer entrenament.</p>
+          </div>
+          <div id="bodyweight-grid" class="card-grid card-grid--compact"></div>
+        </section>
+
+        <section id="section-catalog" class="panel" x-cloak x-show="isActive('section-catalog')">
+          <div class="panel__header">
+            <div>
+              <h2>Cataleg F&amp;H</h2>
+            </div>
+            <p id="catalog-count" class="summary-text">0 fitxes</p>
+          </div>
+          <div id="catalog-grid" class="card-grid"></div>
+          <p id="empty-state" class="empty-state">No hi ha resultats per als filtres actuals.</p>
+          <div id="catalog-empty-actions" class="panel__footer-actions" hidden>
+            <button id="catalog-sync-action" class="button button--primary" type="button">Sincronitza cataleg</button>
+            <button class="button button--ghost" type="button" @click="goTo('section-bodyweight')">Entrenar sense maquines</button>
+          </div>
+        </section>
+
+        <section id="section-hidden" class="panel" x-cloak x-show="isActive('section-hidden')">
+          <div class="panel__header">
+            <div>
+              <h2>Maquines descartades</h2>
+            </div>
+            <p id="hidden-count" class="summary-text">0 descartades</p>
+          </div>
+          <p class="summary-text">No tornaran a sortir a recomanacions ni al cataleg filtrat.</p>
+          <div id="hidden-grid" class="card-grid card-grid--compact"></div>
+          <p id="hidden-empty-state" class="empty-state">Encara no has descartat cap maquina.</p>
+        </section>
+
+        <section id="section-timers" class="panel" x-cloak x-show="isActive('section-timers')">
+          <div class="panel__header">
+            <div>
+              <h2>Cronometres</h2>
+            </div>
+            <p id="notification-status" class="summary-text">Comprovant suport de notificacions...</p>
+          </div>
+          <div class="timer-layout">
+            <div class="timer-card timer-card--session">
+              <h3 class="subheading">Sessio</h3>
+              <div id="session-clock" class="timer-display">00:00:00</div>
+              <div class="machine-card__actions">
+                <button id="session-start" class="button button--primary" type="button">Inicia</button>
+                <button id="session-pause" class="button button--secondary" type="button">Pausa</button>
+                <button id="session-reset" class="button button--ghost" type="button">Reinicia</button>
+              </div>
+            </div>
+            <div class="timer-card timer-card--rest">
+              <h3 class="subheading">Descans</h3>
+              <div id="rest-clock" class="timer-display">00:00</div>
+              <div class="chip-row" id="rest-presets">
+                <button class="chip" data-rest-seconds="45" type="button">45s</button>
+                <button class="chip" data-rest-seconds="60" type="button">60s</button>
+                <button class="chip" data-rest-seconds="90" type="button">90s</button>
+                <button class="chip" data-rest-seconds="120" type="button">120s</button>
+              </div>
+              <div class="machine-card__actions">
+                <button id="rest-stop" class="button button--secondary" type="button">Atura descans</button>
+                <button id="notification-permission" class="button button--ghost" type="button">Activa avisos</button>
+                <button id="wake-lock-toggle" class="button button--ghost" type="button">Mante pantalla</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel__footer-actions">
+            <button class="button button--ghost" type="button" @click="goTo('section-session')">Veure sessio</button>
+            <button class="button button--ghost" type="button" @click="goTo('section-log')">Registrar exercici</button>
+          </div>
+        </section>
+
+        <section id="section-log" class="panel" x-cloak x-show="isActive('section-log')">
+          <div class="panel__header">
+            <div>
+              <h2>Registrar exercici</h2>
+            </div>
+            <p id="log-form-status" class="summary-text">Selecciona o escriu un exercici conegut per registrar-lo manualment.</p>
+          </div>
+          <form id="log-form" class="planner-form">
+            <label class="toolbar__field">
+              <span>Exercici</span>
+              <input id="log-form-exercise" type="text" list="log-form-exercise-list" placeholder="Ex. Flexions, Air squat, Chest press">
+            </label>
+            <datalist id="log-form-exercise-list"></datalist>
+            <div class="planner-form__row">
+              <label class="toolbar__field">
+                <span>Series</span>
+                <input id="log-form-sets" name="sets" type="text" placeholder="3">
+              </label>
+              <label class="toolbar__field">
+                <span>Reps / temps</span>
+                <input id="log-form-reps" name="reps" type="text" placeholder="8-12 o 30s">
+              </label>
+              <label class="toolbar__field">
+                <span>Pes kg</span>
+                <input id="log-form-weight" name="weightKg" type="number" step="0.5" min="0" placeholder="0">
+              </label>
+            </div>
+            <label class="toolbar__field">
+              <span>Notes</span>
+              <textarea id="log-form-notes" name="notes" rows="3" placeholder="Tecnica, descans, sensacions..."></textarea>
+            </label>
+            <div class="machine-card__actions">
+              <button id="log-form-submit" class="button button--primary" type="submit">Guardar registre</button>
+              <button id="log-form-cancel" class="button button--ghost" type="button">Cancel.la</button>
+            </div>
+          </form>
+          <div id="log-next-actions" class="machine-card__actions" hidden>
+            <button class="button button--secondary" type="button" data-next-section="section-recommendations">Tornar a propostes</button>
+            <button class="button button--secondary" type="button" data-next-section="section-session">Veure sessio</button>
+            <button class="button button--secondary" type="button" data-next-section="section-history">Veure historic</button>
+            <button class="button button--ghost" type="button" data-log-reset>Afegir un altre</button>
+          </div>
+        </section>
+
+        <section id="section-session" class="panel" x-cloak x-show="isActive('section-session')">
+          <div class="panel__header">
+            <div>
+              <h2>Sessio activa</h2>
+            </div>
+            <p id="session-status" class="summary-text">Encara no hi ha cap sessio activa.</p>
+          </div>
+          <div class="session-layout session-layout--active">
+            <div class="session-card session-card--active-primary">
+              <div class="machine-card__actions">
+                <button id="active-session-start" class="button button--primary" type="button">Nova sessio</button>
+                <button id="active-session-end" class="button button--secondary" type="button">Tanca sessio</button>
+                <button id="copy-last-session" class="button button--ghost" type="button">Reutilitza ultima</button>
+              </div>
+              <div id="active-session-summary" class="summary-text">
+                Quan comencis una sessio, les maquines i exercicis que marquis quedaran agrupats amb sets, reps i pes.
+              </div>
+              <div id="active-session-list" class="session-list"></div>
+              <div>
+                <h3 class="subheading">Ultimes sessions</h3>
+                <div id="completed-session-list" class="session-list"></div>
+              </div>
+            </div>
+            <div class="session-card session-card--active-secondary">
+              <h3 class="subheading">PRs basics</h3>
+              <div id="pr-list" class="pr-list"></div>
+            </div>
+          </div>
+          <div class="panel__footer-actions">
+            <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Veure propostes</button>
+            <button class="button button--ghost" type="button" @click="goTo('section-log')">Registre manual</button>
+          </div>
+        </section>
+
+        <section id="section-history" class="panel" x-cloak x-show="isActive('section-history')">
+          <div class="panel__header">
+            <div>
+              <h2>Us i calendari</h2>
+            </div>
+            <p id="history-summary" class="summary-text">Sense sessions registrades.</p>
+          </div>
+          <div class="history-layout">
+            <div>
+              <div class="calendar-head">
+                <span id="calendar-title"></span>
+              </div>
+              <div class="calendar-grid calendar-grid--labels">
+                <span>Dl</span>
+                <span>Dt</span>
+                <span>Dc</span>
+                <span>Dj</span>
+                <span>Dv</span>
+                <span>Ds</span>
+                <span>Dg</span>
+              </div>
+          <div id="history-calendar" class="calendar-grid"></div>
+        </div>
+        <div>
+          <h3 class="subheading">Ultims usos</h3>
+          <div id="history-list" class="history-list"></div>
+        </div>
+      </div>
+          <div class="panel__footer-actions">
+            <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Comenca entrenament</button>
+            <button class="button button--ghost" type="button" @click="goTo('section-log')">Registre manual</button>
+          </div>
+          <div class="body-balance">
+            <div>
+              <h3 class="subheading">Mapa de compensacio muscular</h3>
+              <p id="balance-summary" class="summary-text">
+                El mapa es basa en el teu historic de pes registrat. S'anira completant quan hi hagi prou dades per grup muscular.
+              </p>
+            </div>
+            <div class="body-balance__content">
+              <div id="body-map-host" class="body-map-host" data-size="lg" aria-live="polite"></div>
+            </div>
+            <div id="balance-legend" class="balance-legend"></div>
+          </div>
+        </section>
+      </main>
+      </div>
+    </div>
+
+    <div id="machine-sheet-modal" class="sheet-modal" hidden aria-hidden="true">
+      <div class="sheet-modal__backdrop" data-sheet-close></div>
+      <section class="sheet-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="machine-sheet-title">
+        <div class="sheet-modal__header">
+          <div>
+            <p class="sheet-modal__eyebrow">Fitxa de maquina</p>
+            <h3 id="machine-sheet-title">Esquema</h3>
+            <p id="machine-sheet-subtitle" class="sheet-modal__subtitle"></p>
+          </div>
+          <button class="button button--ghost" type="button" data-sheet-close>Tanca</button>
+        </div>
+        <p id="machine-sheet-status" class="sheet-modal__status"></p>
+        <div id="machine-sheet-body"></div>
+        <div class="sheet-modal__footer">
+          <a id="machine-sheet-source" class="button button--ghost" href="#" target="_blank" rel="noopener">Fitxa original</a>
+        </div>
+      </section>
+    </div>
+
+    <template id="card-template">
+      <article class="machine-card">
+        <div class="machine-card__image-wrap">
+          <img class="machine-card__image" alt="" loading="lazy">
+        </div>
+        <div class="machine-card__body">
+          <div class="machine-card__topline">
+            <span class="machine-card__type"></span>
+            <span class="machine-card__series"></span>
+          </div>
+          <h3 class="machine-card__title"></h3>
+          <p class="machine-card__description"></p>
+          <div class="tag-row machine-card__muscles"></div>
+          <div class="tag-row machine-card__collections"></div>
+          <div class="machine-card__actions">
+            <a class="button button--ghost machine-card__link" href="#" target="_blank" rel="noopener">Fitxa</a>
+            <button class="button button--secondary machine-card__toggle" type="button"></button>
+            <button class="button button--primary machine-card__log" type="button">Feta avui</button>
+          </div>
+        </div>
+      </article>
+    </template>
+    <script type="module" src="assets/app.js"></script>
+  </body>
+</html>
