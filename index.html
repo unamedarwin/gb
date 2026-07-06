@@ -152,6 +152,7 @@
               <strong>Encara no hi ha sessio carregada</strong>
               <span>Genera la sessio d'avui per veure el primer pas.</span>
             </div>
+            <div id="today-plan-alternatives" class="alt-swap-list" hidden></div>
             <div id="today-plan-actions" class="machine-card__actions">
               <button id="today-plan-start" class="button button--primary" type="button">Comenca sessio guiada</button>
               <button id="today-plan-log" class="button button--secondary" type="button">Registrar pas actual</button>
@@ -207,8 +208,8 @@
                   <input name="name" type="text" required placeholder="Ex. Flexions inclinades">
                 </label>
                 <label class="toolbar__field">
-                  <span>Zona / maquina</span>
-                  <input name="gymArea" type="text" placeholder="Ex. Pes corporal, banda, banc">
+                  <span>Zona / equip</span>
+                  <select id="exercise-gym-area" name="gymArea"></select>
                 </label>
                 <label class="toolbar__field">
                   <span>Grup principal</span>
@@ -221,11 +222,11 @@
                 <div class="planner-form__row">
                   <label class="toolbar__field">
                     <span>Series</span>
-                    <input name="sets" type="text" placeholder="3">
+                    <select id="exercise-sets" name="sets"></select>
                   </label>
                   <label class="toolbar__field">
                     <span>Reps</span>
-                    <input name="reps" type="text" placeholder="8-12">
+                    <select id="exercise-reps" name="reps"></select>
                   </label>
                   <label class="toolbar__field">
                     <span>Pes kg</span>
@@ -323,22 +324,21 @@
             <div>
               <h2>Registrar exercici</h2>
             </div>
-            <p id="log-form-status" class="summary-text">Selecciona o escriu un exercici conegut per registrar-lo manualment.</p>
+            <p id="log-form-status" class="summary-text">Selecciona un exercici conegut per registrar-lo.</p>
           </div>
           <form id="log-form" class="planner-form">
             <label class="toolbar__field">
               <span>Exercici</span>
-              <input id="log-form-exercise" type="text" list="log-form-exercise-list" placeholder="Ex. Flexions, Air squat, Chest press">
+              <select id="log-form-exercise"></select>
             </label>
-            <datalist id="log-form-exercise-list"></datalist>
             <div class="planner-form__row">
               <label class="toolbar__field">
                 <span>Series</span>
-                <input id="log-form-sets" name="sets" type="text" placeholder="3">
+                <select id="log-form-sets" name="sets"></select>
               </label>
               <label class="toolbar__field">
                 <span>Reps / temps</span>
-                <input id="log-form-reps" name="reps" type="text" placeholder="8-12 o 30s">
+                <select id="log-form-reps" name="reps"></select>
               </label>
               <label class="toolbar__field">
                 <span>Pes kg</span>
@@ -383,6 +383,26 @@
               <div>
                 <h3 class="subheading">Ultimes sessions</h3>
                 <div id="completed-session-list" class="session-list"></div>
+              </div>
+              <div id="completed-session-editor" class="session-card session-card--editor" hidden>
+                <div class="panel__header panel__header--tight">
+                  <div>
+                    <h3 class="subheading">Editar sessio</h3>
+                    <p id="completed-session-editor-summary" class="summary-text">Ajusta objectiu, exercicis i carrega abans de desar.</p>
+                  </div>
+                </div>
+                <form id="completed-session-form" class="planner-form">
+                  <label class="toolbar__field">
+                    <span>Objectiu</span>
+                    <select id="completed-session-objective" name="objective"></select>
+                  </label>
+                  <div id="completed-session-entry-list" class="session-list"></div>
+                  <div class="machine-card__actions">
+                    <button id="completed-session-save" class="button button--primary" type="submit">Desa canvis</button>
+                    <button id="completed-session-cancel" class="button button--ghost" type="button">Tanca editor</button>
+                    <button id="completed-session-delete" class="button button--ghost" type="button">Esborra sessio</button>
+                  </div>
+                </form>
               </div>
             </div>
             <div class="session-card session-card--active-secondary">
@@ -467,7 +487,10 @@
     <template id="card-template">
       <article class="machine-card">
         <div class="machine-card__image-wrap">
-          <img class="machine-card__image" alt="" loading="lazy">
+          <div class="machine-card__gallery" aria-label="Galeria de la maquina"></div>
+          <button class="machine-card__gallery-nav machine-card__gallery-nav--prev" type="button" aria-label="Foto anterior">&#8249;</button>
+          <button class="machine-card__gallery-nav machine-card__gallery-nav--next" type="button" aria-label="Foto seguent">&#8250;</button>
+          <div class="machine-card__gallery-dots" aria-hidden="true"></div>
         </div>
         <div class="machine-card__body">
           <div class="machine-card__topline">
@@ -475,11 +498,18 @@
             <span class="machine-card__series"></span>
           </div>
           <h3 class="machine-card__title"></h3>
+          <div class="machine-card__focus">
+            <div class="machine-card__focus-copy">
+              <p class="machine-card__focus-label"></p>
+              <p class="machine-card__cue"></p>
+            </div>
+            <div class="machine-card__muscle-map" aria-hidden="true"></div>
+          </div>
           <p class="machine-card__description"></p>
           <div class="tag-row machine-card__muscles"></div>
           <div class="tag-row machine-card__collections"></div>
           <div class="machine-card__actions">
-            <a class="button button--ghost machine-card__link" href="#" target="_blank" rel="noopener">Fitxa</a>
+            <a class="button button--ghost machine-card__link" href="#" target="_blank" rel="noopener">Com fer-la</a>
             <button class="button button--secondary machine-card__toggle" type="button"></button>
             <button class="button button--primary machine-card__log" type="button">Feta avui</button>
           </div>

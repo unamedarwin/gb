@@ -1,11 +1,11 @@
 import { APP_NAME, CATALOG_PROVIDERS, CHECKLIST_MUSCLE_GROUPS, DURATION_OPTIONS, IMAGE_CACHE, MUSCLE_GROUPS, OBJECTIVE_OPTIONS, ROUTINE_DAY_OPTIONS, SYNC_VERSION } from "./config.js";
 import { BODYWEIGHT_EXERCISES } from "./bodyweight-library.js";
 import { fetchCatalogWithProgress, fetchProductInstructionSheet } from "./catalog.js";
-import { buildLoggableExerciseContexts, resolveLogContextFromInput } from "./logging-catalog.js";
+import { buildLoggableExerciseContexts, normalizeLookupText, resolveLogContextFromInput } from "./logging-catalog.js";
 import { buildProgressionProfile } from "./proportionality.js";
 import { buildCalendarDays, buildRoutine, compareProducts, createUsageStats, decorateRecommendations, filterProducts, getHiddenProducts, getVisibleProducts } from "./recommendations.js";
 import { runClientMigrations } from "./migrations.js";
-import { readCustomExercises, readMachinePrefs, readMeta, readProducts, readRoutineDays, readSessions, readUsageEvents, writeCustomExercise, writeMachinePref, writeMeta, writeProducts, writeRoutineDay, writeSession, writeUsageEvent, writeUsageEventAndSession } from "./storage.js";
+import { deleteSessionCascade, readCustomExercises, readMachinePrefs, readMeta, readProducts, readRoutineDays, readSessions, readUsageEvents, replaceSessionUsageEvents, writeCustomExercise, writeMachinePref, writeMeta, writeProducts, writeRoutineDay, writeSession, writeUsageEvent, writeUsageEventAndSession } from "./storage.js";
 
 const state = {
   products: [],
@@ -38,8 +38,49 @@ const state = {
   serviceWorkerReady: false,
   firstUseDismissed: false,
   machineSheetCache: {},
-  machineSheetRequestToken: 0
+  machineSheetRequestToken: 0,
+  editingCompletedSessionId: null,
+  editingCompletedSessionDraft: null
 };
+
+const GYM_AREA_OPTIONS = [
+  { value: "", label: "Selecciona zona o equip" },
+  { value: "Maquina guiada", label: "Maquina guiada" },
+  { value: "Maquina de discs", label: "Maquina de discs" },
+  { value: "Cable / politja", label: "Cable / politja" },
+  { value: "Pes corporal", label: "Pes corporal" },
+  { value: "Mancuernes", label: "Mancuernes" },
+  { value: "Barra", label: "Barra" },
+  { value: "Banc", label: "Banc" },
+  { value: "Banda elastica", label: "Banda elastica" },
+  { value: "Core / estoreta", label: "Core / estoreta" },
+  { value: "Cardio", label: "Cardio" },
+  { value: "Altre", label: "Altre" }
+];
+
+const SET_SELECT_OPTIONS = [
+  { value: "", label: "Series" },
+  { value: "2", label: "2" },
+  { value: "3", label: "3" },
+  { value: "4", label: "4" },
+  { value: "5", label: "5" },
+  { value: "6", label: "6" }
+];
+
+const REP_SELECT_OPTIONS = [
+  { value: "", label: "Reps / temps" },
+  { value: "5-8", label: "5-8 rep" },
+  { value: "6-10", label: "6-10 rep" },
+  { value: "8-12", label: "8-12 rep" },
+  { value: "10-12", label: "10-12 rep" },
+  { value: "10-15", label: "10-15 rep" },
+  { value: "12-15", label: "12-15 rep" },
+  { value: "12-20", label: "12-20 rep" },
+  { value: "15-20", label: "15-20 rep" },
+  { value: "20-30s", label: "20-30 s" },
+  { value: "30-45s", label: "30-45 s" },
+  { value: "45-60s", label: "45-60 s" }
+];
 
 const elements = {
   syncButton: document.querySelector("#sync-button"),
@@ -52,6 +93,7 @@ const elements = {
   todayPlanPanel: document.querySelector("#today-plan-panel"),
   todayPlanSummary: document.querySelector("#today-plan-summary"),
   todayPlanCurrent: document.querySelector("#today-plan-current"),
+  todayPlanAlternatives: document.querySelector("#today-plan-alternatives"),
   todayPlanStart: document.querySelector("#today-plan-start"),
   todayPlanLog: document.querySelector("#today-plan-log"),
   todayPlanAlternative: document.querySelector("#today-plan-alternative"),
@@ -83,8 +125,11 @@ const elements = {
   routineDayGrid: document.querySelector("#routine-day-grid"),
   exerciseForm: document.querySelector("#exercise-form"),
   exerciseDay: document.querySelector("#exercise-day"),
+  exerciseGymArea: document.querySelector("#exercise-gym-area"),
   exercisePrimaryMuscle: document.querySelector("#exercise-primary-muscle"),
   exerciseSecondaryMuscles: document.querySelector("#exercise-secondary-muscles"),
+  exerciseSets: document.querySelector("#exercise-sets"),
+  exerciseReps: document.querySelector("#exercise-reps"),
   sessionStatus: document.querySelector("#session-status"),
   activeSessionStart: document.querySelector("#active-session-start"),
   activeSessionEnd: document.querySelector("#active-session-end"),
@@ -92,6 +137,14 @@ const elements = {
   activeSessionSummary: document.querySelector("#active-session-summary"),
   activeSessionList: document.querySelector("#active-session-list"),
   completedSessionList: document.querySelector("#completed-session-list"),
+  completedSessionEditor: document.querySelector("#completed-session-editor"),
+  completedSessionEditorSummary: document.querySelector("#completed-session-editor-summary"),
+  completedSessionForm: document.querySelector("#completed-session-form"),
+  completedSessionObjective: document.querySelector("#completed-session-objective"),
+  completedSessionEntryList: document.querySelector("#completed-session-entry-list"),
+  completedSessionSave: document.querySelector("#completed-session-save"),
+  completedSessionCancel: document.querySelector("#completed-session-cancel"),
+  completedSessionDelete: document.querySelector("#completed-session-delete"),
   prList: document.querySelector("#pr-list"),
   historySummary: document.querySelector("#history-summary"),
   historyCalendar: document.querySelector("#history-calendar"),
@@ -113,7 +166,6 @@ const elements = {
   logFormStatus: document.querySelector("#log-form-status"),
   logForm: document.querySelector("#log-form"),
   logFormExercise: document.querySelector("#log-form-exercise"),
-  logFormExerciseList: document.querySelector("#log-form-exercise-list"),
   logFormSets: document.querySelector("#log-form-sets"),
   logFormReps: document.querySelector("#log-form-reps"),
   logFormWeight: document.querySelector("#log-form-weight"),
@@ -198,6 +250,11 @@ function bindEvents() {
   elements.activeSessionEnd.addEventListener("click", finishActiveWorkoutSession);
   elements.copyLastSession.addEventListener("click", copyLatestSession);
   elements.exerciseForm.addEventListener("submit", handleExerciseFormSubmit);
+  elements.completedSessionForm?.addEventListener("submit", handleCompletedSessionFormSubmit);
+  elements.completedSessionForm?.addEventListener("input", handleCompletedSessionFormInput);
+  elements.completedSessionForm?.addEventListener("click", handleCompletedSessionFormClick);
+  elements.completedSessionCancel?.addEventListener("click", closeCompletedSessionEditor);
+  elements.completedSessionDelete?.addEventListener("click", handleCompletedSessionDelete);
   elements.sessionStart.addEventListener("click", startSessionTimer);
   elements.sessionPause.addEventListener("click", pauseSessionTimer);
   elements.sessionReset.addEventListener("click", resetSessionTimer);
@@ -214,11 +271,12 @@ function bindEvents() {
   elements.todayPlanStart?.addEventListener("click", handleTodayPlanStart);
   elements.todayPlanLog?.addEventListener("click", handleTodayPlanLog);
   elements.todayPlanAlternative?.addEventListener("click", handleTodayPlanAlternative);
+  elements.todayPlanAlternatives?.addEventListener("click", handleTodayPlanAlternativeRailClick);
   elements.todayPlanSkip?.addEventListener("click", handleTodayPlanSkip);
   elements.todayPlanRefresh?.addEventListener("click", handleTodayPlanRefresh);
   elements.logForm.addEventListener("submit", handleLogFormSubmit);
   elements.logFormCancel.addEventListener("click", () => clearLogForm());
-  elements.logFormExercise.addEventListener("input", handleLogExerciseInput);
+  elements.logFormExercise.addEventListener("change", handleLogExerciseInput);
   elements.logNextActions.addEventListener("click", handleLogNextActionsClick);
   elements.firstUseWizard?.addEventListener("click", handleFirstUseAction);
   elements.machineSheetModal?.addEventListener("click", handleMachineSheetClick);
@@ -313,6 +371,42 @@ function populatePlannerSelects() {
 
   elements.exercisePrimaryMuscle.innerHTML = muscleOptions;
   elements.exerciseSecondaryMuscles.innerHTML = muscleOptions;
+  renderSelectOptions(elements.exerciseGymArea, GYM_AREA_OPTIONS);
+  renderSelectOptions(elements.exerciseSets, SET_SELECT_OPTIONS);
+  renderSelectOptions(elements.exerciseReps, REP_SELECT_OPTIONS);
+  renderSelectOptions(elements.logFormSets, SET_SELECT_OPTIONS);
+  renderSelectOptions(elements.logFormReps, REP_SELECT_OPTIONS);
+  renderSelectOptions(elements.completedSessionObjective, OBJECTIVE_OPTIONS.map((option) => ({ value: option.id, label: option.label })));
+}
+
+function renderSelectOptions(select, options) {
+  if (!select) {
+    return;
+  }
+  select.innerHTML = options
+    .map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
+    .join("");
+}
+
+function setSelectValue(select, value, fallbackLabel = value) {
+  if (!select) {
+    return;
+  }
+
+  const normalizedValue = String(value || "").trim();
+  if (!normalizedValue) {
+    select.value = "";
+    return;
+  }
+
+  const existing = Array.from(select.options).find((option) => option.value === normalizedValue);
+  if (!existing) {
+    const option = document.createElement("option");
+    option.value = normalizedValue;
+    option.textContent = String(fallbackLabel || normalizedValue);
+    select.append(option);
+  }
+  select.value = normalizedValue;
 }
 
 function renderFirstUseWizard() {
@@ -744,6 +838,7 @@ function renderTodayPlan(guidedPlan, routine) {
     elements.todayPlanAlternative.disabled = true;
     elements.todayPlanSkip.disabled = true;
     elements.todayPlanRefresh.disabled = true;
+    renderTodayPlanAlternatives(null);
     return;
   }
 
@@ -755,6 +850,7 @@ function renderTodayPlan(guidedPlan, routine) {
   elements.todayPlanStart.disabled = false;
   elements.todayPlanLog.disabled = !currentStep;
   elements.todayPlanAlternative.disabled = !currentStep || (currentStep.alternativeOptions?.length || 0) === 0;
+  elements.todayPlanAlternative.textContent = currentStep?.alternativeOptions?.length ? `${currentStep.alternativeOptions.length} alternatives` : "Maquina ocupada";
   elements.todayPlanSkip.disabled = !currentStep;
   elements.todayPlanRefresh.disabled = hasStartedPlan && completedCount > 0;
 
@@ -763,6 +859,7 @@ function renderTodayPlan(guidedPlan, routine) {
       <strong>Sessio del dia completada</strong>
       <span>Has tancat tots els passos. Pots revisar l'historic o generar una sessio nova amb altres filtres.</span>
     `;
+    renderTodayPlanAlternatives(null);
     return;
   }
 
@@ -775,6 +872,30 @@ function renderTodayPlan(guidedPlan, routine) {
     nextAlternative ? `<span>Si esta ocupada: ${escapeHtml(nextAlternative.title)}.</span>` : `<span>Cap alternativa directa disponible: salta el pas si la maquina no esta lliure.</span>`
   ].filter(Boolean);
   elements.todayPlanCurrent.innerHTML = pieces.join("");
+  renderTodayPlanAlternatives(currentStep);
+}
+
+function renderTodayPlanAlternatives(currentStep) {
+  if (!elements.todayPlanAlternatives) {
+    return;
+  }
+
+  const alternatives = currentStep?.alternativeOptions || [];
+  elements.todayPlanAlternatives.hidden = alternatives.length === 0;
+  if (alternatives.length === 0) {
+    elements.todayPlanAlternatives.innerHTML = "";
+    return;
+  }
+
+  elements.todayPlanAlternatives.innerHTML = alternatives
+    .map((option, index) => `
+      <button class="alt-swap-card" type="button" data-alt-index="${index}">
+        <strong>${escapeHtml(option.title)}</strong>
+        <span>${escapeHtml(buildMachineActionSummary(option, pickPrimaryMuscle(option.muscleGroups)))}</span>
+        <span>${escapeHtml(option.prescription || formatSuggestedWeightCompact(option) || "Canvia aquesta maquina")}</span>
+      </button>
+    `)
+    .join("");
 }
 
 function buildGuidedPlanCard(step, isCurrent) {
@@ -1072,10 +1193,216 @@ function renderActiveSession() {
       item.innerHTML = `
         <strong>${new Date(session.startedAt).toLocaleDateString("ca-ES")}</strong>
         <span class="session-item__meta">${session.entries.length} exercicis - objectiu ${labelForObjective(session.objective)}</span>
+        <div class="machine-card__actions">
+          <button class="button button--secondary" type="button">Edita</button>
+          <button class="button button--ghost" type="button">Esborra</button>
+        </div>
       `;
+      const [editButton, deleteButton] = item.querySelectorAll("button");
+      editButton.addEventListener("click", () => openCompletedSessionEditor(session.id));
+      deleteButton.addEventListener("click", () => handleCompletedSessionDelete(session.id));
       elements.completedSessionList.append(item);
     }
   }
+
+  renderCompletedSessionEditor();
+}
+
+function openCompletedSessionEditor(sessionId) {
+  const session = state.sessions.find((entry) => entry.id === sessionId && entry.endedAt);
+  if (!session) {
+    return;
+  }
+  state.editingCompletedSessionId = sessionId;
+  state.editingCompletedSessionDraft = {
+    ...session,
+    entries: session.entries.map((entry) => ({ ...entry }))
+  };
+  renderAll();
+}
+
+function closeCompletedSessionEditor() {
+  state.editingCompletedSessionId = null;
+  state.editingCompletedSessionDraft = null;
+  renderAll();
+}
+
+function renderCompletedSessionEditor() {
+  const draft = state.editingCompletedSessionDraft;
+  if (!elements.completedSessionEditor || !elements.completedSessionEntryList || !elements.completedSessionEditorSummary) {
+    return;
+  }
+
+  elements.completedSessionEditor.hidden = !draft;
+  if (!draft) {
+    elements.completedSessionEntryList.innerHTML = "";
+    return;
+  }
+
+  setSelectValue(elements.completedSessionObjective, draft.objective || "hypertrophy", labelForObjective(draft.objective || "hypertrophy"));
+  elements.completedSessionEditorSummary.textContent = `${new Date(draft.startedAt).toLocaleString("ca-ES")} - ${draft.entries.length} exercicis registrats.`;
+  elements.completedSessionEntryList.innerHTML = "";
+
+  draft.entries.forEach((entry, index) => {
+    const item = document.createElement("div");
+    item.className = "session-item session-item--editable";
+    item.innerHTML = `
+      <div class="planner-form__row">
+        <label class="toolbar__field">
+          <span>Exercici</span>
+          <input type="text" data-entry-id="${entry.id}" data-field="title" value="${escapeHtml(entry.title || "")}">
+        </label>
+        <label class="toolbar__field">
+          <span>Series</span>
+          <input type="text" data-entry-id="${entry.id}" data-field="sets" value="${escapeHtml(entry.sets || "")}">
+        </label>
+        <label class="toolbar__field">
+          <span>Reps / temps</span>
+          <input type="text" data-entry-id="${entry.id}" data-field="reps" value="${escapeHtml(entry.reps || "")}">
+        </label>
+      </div>
+      <div class="planner-form__row">
+        <label class="toolbar__field">
+          <span>Pes kg</span>
+          <input type="number" step="0.5" min="0" data-entry-id="${entry.id}" data-field="weightKg" value="${entry.weightKg ?? ""}">
+        </label>
+        <label class="toolbar__field">
+          <span>Musculs</span>
+          <input type="text" value="${escapeHtml((entry.muscleGroups || []).map((muscle) => labelForMuscle(muscle)).join(", "))}" disabled>
+        </label>
+        <div class="machine-card__actions">
+          <button class="button button--ghost" type="button" data-remove-session-entry="${entry.id}">Elimina exercici</button>
+        </div>
+      </div>
+      <label class="toolbar__field">
+        <span>Notes</span>
+        <textarea rows="2" data-entry-id="${entry.id}" data-field="notes">${escapeHtml(entry.notes || "")}</textarea>
+      </label>
+      <span class="session-item__meta">Pas ${index + 1} - ${entry.addedAt ? new Date(entry.addedAt).toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" }) : "hora no disponible"}</span>
+    `;
+    elements.completedSessionEntryList.append(item);
+  });
+}
+
+function handleCompletedSessionFormInput(event) {
+  const draft = state.editingCompletedSessionDraft;
+  if (!draft) {
+    return;
+  }
+
+  if (event.target === elements.completedSessionObjective) {
+    draft.objective = elements.completedSessionObjective.value;
+    return;
+  }
+
+  const entryId = event.target.dataset.entryId;
+  const field = event.target.dataset.field;
+  if (!entryId || !field) {
+    return;
+  }
+
+  const entry = draft.entries.find((item) => item.id === entryId);
+  if (!entry) {
+    return;
+  }
+
+  entry[field] = field === "weightKg" ? parseOptionalNumber(event.target.value) : String(event.target.value || "");
+}
+
+function handleCompletedSessionFormClick(event) {
+  const entryButton = event.target.closest("[data-remove-session-entry]");
+  if (!entryButton || !state.editingCompletedSessionDraft) {
+    return;
+  }
+
+  state.editingCompletedSessionDraft.entries = state.editingCompletedSessionDraft.entries.filter((entry) => entry.id !== entryButton.dataset.removeSessionEntry);
+  renderCompletedSessionEditor();
+}
+
+async function handleCompletedSessionFormSubmit(event) {
+  event.preventDefault();
+  const draft = state.editingCompletedSessionDraft;
+  if (!draft) {
+    return;
+  }
+
+  const normalizedEntries = draft.entries
+    .map((entry) => ({
+      ...entry,
+      title: String(entry.title || "").trim(),
+      sets: String(entry.sets || "").trim(),
+      reps: String(entry.reps || "").trim(),
+      notes: String(entry.notes || "").trim(),
+      weightKg: typeof entry.weightKg === "number" ? entry.weightKg : parseOptionalNumber(entry.weightKg)
+    }))
+    .filter((entry) => entry.title);
+
+  const session = {
+    ...draft,
+    objective: draft.objective || "hypertrophy",
+    entries: normalizedEntries,
+    updatedAt: new Date().toISOString()
+  };
+  const usageEvents = buildUsageEventsFromSession(session);
+
+  await replaceSessionUsageEvents(session, usageEvents);
+  syncSessionInState(session);
+  state.usageEvents = [
+    ...state.usageEvents.filter((entry) => entry.sessionId !== session.id),
+    ...usageEvents
+  ].sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  state.editingCompletedSessionId = null;
+  state.editingCompletedSessionDraft = null;
+  recomputeDerivedState();
+  renderAll();
+}
+
+async function handleCompletedSessionDelete(sessionId = state.editingCompletedSessionId) {
+  const targetId = sessionId || state.editingCompletedSessionId;
+  if (!targetId) {
+    return;
+  }
+
+  const target = state.sessions.find((session) => session.id === targetId);
+  if (!target) {
+    return;
+  }
+
+  const confirmed = window.confirm(`Esborrar la sessio del ${new Date(target.startedAt).toLocaleDateString("ca-ES")} i els seus registres associats?`);
+  if (!confirmed) {
+    return;
+  }
+
+  await deleteSessionCascade(targetId);
+  state.sessions = state.sessions.filter((session) => session.id !== targetId);
+  state.usageEvents = state.usageEvents.filter((entry) => entry.sessionId !== targetId);
+  if (state.editingCompletedSessionId === targetId) {
+    state.editingCompletedSessionId = null;
+    state.editingCompletedSessionDraft = null;
+  }
+  recomputeDerivedState();
+  renderAll();
+}
+
+function buildUsageEventsFromSession(session) {
+  return session.entries.map((entry, index) => {
+    const timestamp = entry.addedAt || new Date(new Date(session.startedAt).getTime() + index * 60000).toISOString();
+    const date = new Date(timestamp);
+    return {
+      id: crypto.randomUUID(),
+      productId: entry.exerciseId || entry.id,
+      productTitle: entry.title,
+      muscleGroups: entry.muscleGroups || [],
+      objective: session.objective,
+      weightKg: typeof entry.weightKg === "number" ? entry.weightKg : parseOptionalNumber(entry.weightKg),
+      sets: entry.sets || "",
+      reps: entry.reps || "",
+      notes: entry.notes || "",
+      sessionId: session.id,
+      createdAt: timestamp,
+      dateKey: getLocalDateKey(date)
+    };
+  });
 }
 
 function renderPersonalRecords() {
@@ -1161,13 +1488,15 @@ async function handleExerciseFormSubmit(event) {
 }
 
 function renderLogExerciseOptions() {
-  if (!elements.logFormExerciseList) {
+  if (!elements.logFormExercise) {
     return;
   }
 
   const contexts = getLoggableExerciseContexts();
-  elements.logFormExerciseList.innerHTML = contexts
-    .map((context) => `<option value="${escapeHtml(context.title)}"></option>`)
+  elements.logFormExercise.innerHTML = [
+    `<option value="">Selecciona un exercici conegut</option>`,
+    ...contexts.map((context) => `<option value="${escapeHtml(context.title)}">${escapeHtml(context.title)}</option>`)
+  ]
     .join("");
 }
 
@@ -1186,7 +1515,7 @@ function handleLogExerciseInput() {
   if (!rawValue) {
     state.pendingLogContext = null;
     elements.logFormSubmit.disabled = true;
-    elements.logFormStatus.textContent = "Selecciona o escriu un exercici conegut per registrar-lo manualment.";
+    elements.logFormStatus.textContent = "Selecciona un exercici conegut per registrar-lo.";
     return;
   }
 
@@ -1194,16 +1523,16 @@ function handleLogExerciseInput() {
   if (!context) {
     state.pendingLogContext = null;
     elements.logFormSubmit.disabled = true;
-    elements.logFormStatus.textContent = "Exercici no reconegut. Obre'l des d'una fitxa o escriu-ne un de conegut.";
+    elements.logFormStatus.textContent = "Exercici no reconegut. Obre'l des d'una fitxa o selecciona'n un de la llista.";
     return;
   }
 
   state.pendingLogContext = context;
   if (!elements.logFormSets.value) {
-    elements.logFormSets.value = context.defaultSets || "";
+    setSelectValue(elements.logFormSets, context.defaultSets || "");
   }
   if (!elements.logFormReps.value) {
-    elements.logFormReps.value = context.defaultReps || "";
+    setSelectValue(elements.logFormReps, context.defaultReps || "");
   }
   if (!elements.logFormNotes.value) {
     elements.logFormNotes.value = context.defaultNotes || "";
@@ -1300,9 +1629,9 @@ function buildLogContextFromProduct(product) {
 function openLogForm(context) {
   state.pendingLogContext = context;
   elements.logNextActions.hidden = true;
-  elements.logFormExercise.value = context.title;
-  elements.logFormSets.value = context.defaultSets || "";
-  elements.logFormReps.value = context.defaultReps || "";
+  setSelectValue(elements.logFormExercise, context.title, context.title);
+  setSelectValue(elements.logFormSets, context.defaultSets || "");
+  setSelectValue(elements.logFormReps, context.defaultReps || "", context.defaultReps || "");
   elements.logFormWeight.value = typeof context.defaultWeightKg === "number" ? String(context.defaultWeightKg) : "";
   elements.logFormNotes.value = context.defaultNotes || "";
   elements.logFormSubmit.disabled = false;
@@ -1318,10 +1647,12 @@ function openLogForm(context) {
 function clearLogForm(statusText) {
   state.pendingLogContext = null;
   elements.logForm.reset();
-  elements.logFormExercise.value = "";
+  setSelectValue(elements.logFormExercise, "");
+  setSelectValue(elements.logFormSets, "");
+  setSelectValue(elements.logFormReps, "");
   elements.logNextActions.hidden = true;
   elements.logFormSubmit.disabled = true;
-  elements.logFormStatus.textContent = statusText || "Selecciona o escriu un exercici conegut per registrar-lo manualment.";
+  elements.logFormStatus.textContent = statusText || "Selecciona un exercici conegut per registrar-lo.";
 }
 
 function handleLogNextActionsClick(event) {
@@ -1422,13 +1753,72 @@ function renderHistory() {
   renderBalanceMap();
 }
 
+function hydrateCardGallery({ gallery, galleryDots, galleryPrev, galleryNext, product }) {
+  const imageUrls = Array.from(new Set([...(product.imageUrls || []), product.heroImage].filter(Boolean)));
+  const slides = imageUrls.length ? imageUrls : ["assets/icons/icon-192.png"];
+
+  gallery.innerHTML = slides
+    .map((url, index) => `
+      <figure class="machine-card__slide" data-slide-index="${index}">
+        <img class="machine-card__image" src="${escapeHtml(url)}" alt="${escapeHtml(`${product.title} - foto ${index + 1}`)}" loading="lazy" referrerpolicy="no-referrer">
+      </figure>
+    `)
+    .join("");
+
+  const hasMultiple = slides.length > 1;
+  galleryDots.hidden = !hasMultiple;
+  galleryPrev.hidden = !hasMultiple;
+  galleryNext.hidden = !hasMultiple;
+
+  if (!hasMultiple) {
+    galleryDots.innerHTML = "";
+    return;
+  }
+
+  galleryDots.innerHTML = slides
+    .map((_, index) => `<button class="machine-card__gallery-dot${index === 0 ? " is-active" : ""}" type="button" data-gallery-index="${index}" aria-label="Foto ${index + 1}"></button>`)
+    .join("");
+
+  const syncActiveDot = () => {
+    const index = Math.round(gallery.scrollLeft / Math.max(gallery.clientWidth, 1));
+    galleryDots.querySelectorAll("[data-gallery-index]").forEach((dot, dotIndex) => {
+      dot.classList.toggle("is-active", dotIndex === index);
+    });
+  };
+
+  galleryDots.addEventListener("click", (event) => {
+    const dot = event.target.closest("[data-gallery-index]");
+    if (!dot) {
+      return;
+    }
+    const index = Number(dot.dataset.galleryIndex || 0);
+    gallery.scrollTo({ left: index * gallery.clientWidth, behavior: "smooth" });
+  });
+  galleryPrev.addEventListener("click", () => {
+    const index = Math.max(0, Math.round(gallery.scrollLeft / Math.max(gallery.clientWidth, 1)) - 1);
+    gallery.scrollTo({ left: index * gallery.clientWidth, behavior: "smooth" });
+  });
+  galleryNext.addEventListener("click", () => {
+    const currentIndex = Math.round(gallery.scrollLeft / Math.max(gallery.clientWidth, 1));
+    const index = Math.min(slides.length - 1, currentIndex + 1);
+    gallery.scrollTo({ left: index * gallery.clientWidth, behavior: "smooth" });
+  });
+  gallery.addEventListener("scroll", syncActiveDot, { passive: true });
+}
+
 function buildCard(product, options) {
   const fragment = elements.cardTemplate.content.cloneNode(true);
   const card = fragment.querySelector(".machine-card");
-  const image = fragment.querySelector(".machine-card__image");
+  const gallery = fragment.querySelector(".machine-card__gallery");
+  const galleryDots = fragment.querySelector(".machine-card__gallery-dots");
+  const galleryPrev = fragment.querySelector(".machine-card__gallery-nav--prev");
+  const galleryNext = fragment.querySelector(".machine-card__gallery-nav--next");
   const type = fragment.querySelector(".machine-card__type");
   const series = fragment.querySelector(".machine-card__series");
   const title = fragment.querySelector(".machine-card__title");
+  const focusLabel = fragment.querySelector(".machine-card__focus-label");
+  const cue = fragment.querySelector(".machine-card__cue");
+  const muscleMap = fragment.querySelector(".machine-card__muscle-map");
   const description = fragment.querySelector(".machine-card__description");
   const muscles = fragment.querySelector(".machine-card__muscles");
   const collections = fragment.querySelector(".machine-card__collections");
@@ -1439,15 +1829,16 @@ function buildCard(product, options) {
   const readOnly = options.readOnly === true;
 
   card.classList.toggle("machine-card--bodyweight", product.equipmentType === "bodyweight");
-  image.src = product.heroImage || "assets/icons/icon-192.png";
-  image.alt = product.title;
-  image.referrerPolicy = "no-referrer";
+  hydrateCardGallery({ gallery, galleryDots, galleryPrev, galleryNext, product });
   type.textContent = labelForEquipmentType(product.equipmentType);
   series.textContent = product.series || "";
   title.textContent = product.title;
-  description.textContent = options.showPrescription
-    ? `${product.recommendationReason || product.description}${product.prescription ? ` - ${product.prescription}` : ""}${formatSuggestedWeight(product)}${product.progressionHint ? ` - ${product.progressionHint}` : ""}`
-    : `${product.description}${formatLastWeight(product.id)}`;
+  const primaryMuscle = pickPrimaryMuscle(product.muscleGroups);
+  focusLabel.textContent = buildMachineActionSummary(product, primaryMuscle);
+  cue.textContent = buildMachineCue(product, primaryMuscle);
+  muscleMap.innerHTML = buildMuscleAvatarMarkup(primaryMuscle, product.muscleGroups || []);
+  muscleMap.setAttribute("aria-label", `Muscul principal ${labelForMuscle(primaryMuscle)}`);
+  description.textContent = buildCardDescription(product, options, primaryMuscle);
   link.hidden = !product.sourceUrl;
   if (product.sourceUrl) {
     link.href = product.sourceUrl;
@@ -1641,8 +2032,186 @@ function labelForEquipmentType(type) {
   return "Suport";
 }
 
+function pickPrimaryMuscle(muscleGroups) {
+  const ranked = ["chest", "back", "shoulders", "legs", "hamstrings", "glutes", "calves", "core", "biceps", "triceps", "cardio"];
+  return ranked.find((muscle) => muscleGroups?.includes(muscle)) || muscleGroups?.[0] || "all";
+}
+
 function labelForMuscle(muscle) {
   return MUSCLE_GROUPS.find((item) => item.id === muscle)?.label || "General";
+}
+
+function buildMachineActionSummary(product, primaryMuscle) {
+  const normalized = normalizeLookupText(`${product.title} ${product.handle || ""} ${(product.collections || []).join(" ")}`);
+  const action = inferMachineAction(normalized, primaryMuscle, product.equipmentType);
+  return `${action} · ${labelForMuscle(primaryMuscle)}`;
+}
+
+function buildMachineCue(product, primaryMuscle) {
+  const normalized = normalizeLookupText(`${product.title} ${product.handle || ""}`);
+  if (product.equipmentType === "bodyweight") {
+    return "Controla el rang, mantingues tecnica neta i evita l'impuls.";
+  }
+  if (normalized.includes("press") || normalized.includes("bench") || normalized.includes("pec")) {
+    return "Ajusta el seient i empeny amb recorregut controlat.";
+  }
+  if (normalized.includes("row") || normalized.includes("remo") || normalized.includes("pulldown") || normalized.includes("lat")) {
+    return "Pit obert, tracciona cap a tu i controla la tornada.";
+  }
+  if (normalized.includes("curl")) {
+    return "Mou el colze sense balancejar el tronc.";
+  }
+  if (normalized.includes("extension")) {
+    return primaryMuscle === "legs"
+      ? "Esten el genoll sense cop sec al final."
+      : "Esten el colze amb control i sense impuls.";
+  }
+  if (normalized.includes("leg press") || normalized.includes("squat") || normalized.includes("hack")) {
+    return "Peus ferms, baixa controlat i empeny sense rebot.";
+  }
+  if (normalized.includes("abductor") || normalized.includes("adductor")) {
+    return "Pelvis estable i recorregut net en cada rep.";
+  }
+  if (normalized.includes("calf")) {
+    return "Eleva talons amb pausa curta a dalt i baixa lent.";
+  }
+  if (primaryMuscle === "cardio") {
+    return "Mantingues ritme constant i postura estable.";
+  }
+  return "Ajusta la postura i completa el recorregut sense impuls.";
+}
+
+function inferMachineAction(normalizedTitle, primaryMuscle, equipmentType) {
+  if (equipmentType === "bodyweight") {
+    return "Exercici sense maquina";
+  }
+  if (primaryMuscle === "cardio") {
+    return "Treball cardiovascular";
+  }
+  if (normalizedTitle.includes("leg press") || normalizedTitle.includes("hack") || normalizedTitle.includes("squat")) {
+    return "Empenta de cames";
+  }
+  if (normalizedTitle.includes("extension")) {
+    return primaryMuscle === "legs" ? "Extensio de cames" : "Extensio guiada";
+  }
+  if (normalizedTitle.includes("curl")) {
+    return primaryMuscle === "hamstrings" ? "Curl femoral" : "Curl de bracos";
+  }
+  if (normalizedTitle.includes("pulldown") || normalizedTitle.includes("lat")) {
+    return "Tirada vertical";
+  }
+  if (normalizedTitle.includes("row") || normalizedTitle.includes("remo")) {
+    return "Rem guiat";
+  }
+  if (normalizedTitle.includes("press") || normalizedTitle.includes("bench") || normalizedTitle.includes("pec")) {
+    return primaryMuscle === "shoulders" ? "Press d'espatlles" : "Press guiat";
+  }
+  if (normalizedTitle.includes("abductor")) {
+    return "Abduccio de maluc";
+  }
+  if (normalizedTitle.includes("adductor")) {
+    return "Adduccio de maluc";
+  }
+  if (normalizedTitle.includes("calf")) {
+    return "Elevacio de bessons";
+  }
+  if (normalizedTitle.includes("glute") || normalizedTitle.includes("hip thrust") || normalizedTitle.includes("kickback")) {
+    return "Treball de glutis";
+  }
+  if (normalizedTitle.includes("ab") || normalizedTitle.includes("crunch") || normalizedTitle.includes("core")) {
+    return "Treball de core";
+  }
+  return primaryMuscle === "all" ? "Maquina guiada" : `Treball de ${labelForMuscle(primaryMuscle).toLowerCase()}`;
+}
+
+function buildCardDescription(product, options, primaryMuscle) {
+  const detailParts = options.showPrescription
+    ? [
+        product.prescription || "",
+        formatSuggestedWeightCompact(product),
+        product.progressionHint ? trimSentence(product.progressionHint, 56) : ""
+      ]
+    : [
+        buildSecondaryMuscleSummary(product.muscleGroups, primaryMuscle),
+        formatLastWeightCompact(product.id)
+      ];
+
+  const detail = detailParts.filter(Boolean).join(" • ");
+  if (detail) {
+    return detail;
+  }
+  if (options.showPrescription) {
+    return buildSecondaryMuscleSummary(product.muscleGroups, primaryMuscle) || "Ajusta pes i manten tecnica neta.";
+  }
+  return trimSentence(product.description, 96) || `Treball principal ${labelForMuscle(primaryMuscle).toLowerCase()}.`;
+}
+
+function buildSecondaryMuscleSummary(muscleGroups, primaryMuscle) {
+  const secondary = (muscleGroups || [])
+    .filter((muscle) => muscle !== primaryMuscle && muscle !== "all")
+    .slice(0, 2)
+    .map((muscle) => labelForMuscle(muscle).toLowerCase());
+  return secondary.length ? `Suport ${secondary.join(" + ")}` : "";
+}
+
+function buildMuscleAvatarMarkup(primaryMuscle, muscleGroups) {
+  const activeZones = new Set(zonesForMuscles([primaryMuscle, ...(muscleGroups || []).slice(1, 3)]));
+  return `
+    <svg class="muscle-avatar" viewBox="0 0 120 78" role="img" aria-hidden="true" focusable="false">
+      <g class="muscle-avatar__figure muscle-avatar__figure--front">
+        <circle class="avatar-base" cx="28" cy="10" r="6"></circle>
+        <rect class="avatar-base" x="22" y="18" width="12" height="22" rx="6"></rect>
+        <rect class="avatar-base" x="15" y="20" width="5" height="21" rx="2.5"></rect>
+        <rect class="avatar-base" x="36" y="20" width="5" height="21" rx="2.5"></rect>
+        <rect class="avatar-base" x="22" y="40" width="5" height="26" rx="2.5"></rect>
+        <rect class="avatar-base" x="29" y="40" width="5" height="26" rx="2.5"></rect>
+        <rect class="avatar-zone ${activeZones.has("shoulders-front") ? "avatar-zone--active" : ""}" x="18" y="17" width="20" height="8" rx="4"></rect>
+        <rect class="avatar-zone ${activeZones.has("chest") ? "avatar-zone--active" : ""}" x="21" y="23" width="14" height="8" rx="4"></rect>
+        <rect class="avatar-zone ${activeZones.has("biceps-front") ? "avatar-zone--active" : ""}" x="14" y="22" width="5" height="12" rx="2.5"></rect>
+        <rect class="avatar-zone ${activeZones.has("biceps-front") ? "avatar-zone--active" : ""}" x="37" y="22" width="5" height="12" rx="2.5"></rect>
+        <rect class="avatar-zone ${activeZones.has("core") ? "avatar-zone--active" : ""}" x="24" y="31" width="8" height="11" rx="4"></rect>
+        <rect class="avatar-zone ${activeZones.has("legs-front") ? "avatar-zone--active" : ""}" x="21" y="42" width="6" height="14" rx="3"></rect>
+        <rect class="avatar-zone ${activeZones.has("legs-front") ? "avatar-zone--active" : ""}" x="29" y="42" width="6" height="14" rx="3"></rect>
+        <rect class="avatar-zone ${activeZones.has("calves-front") ? "avatar-zone--active" : ""}" x="21" y="56" width="6" height="10" rx="3"></rect>
+        <rect class="avatar-zone ${activeZones.has("calves-front") ? "avatar-zone--active" : ""}" x="29" y="56" width="6" height="10" rx="3"></rect>
+      </g>
+      <g class="muscle-avatar__figure muscle-avatar__figure--back">
+        <circle class="avatar-base" cx="88" cy="10" r="6"></circle>
+        <rect class="avatar-base" x="82" y="18" width="12" height="22" rx="6"></rect>
+        <rect class="avatar-base" x="75" y="20" width="5" height="21" rx="2.5"></rect>
+        <rect class="avatar-base" x="96" y="20" width="5" height="21" rx="2.5"></rect>
+        <rect class="avatar-base" x="82" y="40" width="5" height="26" rx="2.5"></rect>
+        <rect class="avatar-base" x="89" y="40" width="5" height="26" rx="2.5"></rect>
+        <rect class="avatar-zone ${activeZones.has("shoulders-back") ? "avatar-zone--active" : ""}" x="78" y="17" width="20" height="8" rx="4"></rect>
+        <rect class="avatar-zone ${activeZones.has("back") ? "avatar-zone--active" : ""}" x="81" y="23" width="14" height="12" rx="4"></rect>
+        <rect class="avatar-zone ${activeZones.has("triceps-back") ? "avatar-zone--active" : ""}" x="74" y="22" width="5" height="12" rx="2.5"></rect>
+        <rect class="avatar-zone ${activeZones.has("triceps-back") ? "avatar-zone--active" : ""}" x="97" y="22" width="5" height="12" rx="2.5"></rect>
+        <rect class="avatar-zone ${activeZones.has("glutes") ? "avatar-zone--active" : ""}" x="82" y="36" width="12" height="8" rx="4"></rect>
+        <rect class="avatar-zone ${activeZones.has("hamstrings") ? "avatar-zone--active" : ""}" x="81" y="43" width="6" height="14" rx="3"></rect>
+        <rect class="avatar-zone ${activeZones.has("hamstrings") ? "avatar-zone--active" : ""}" x="89" y="43" width="6" height="14" rx="3"></rect>
+        <rect class="avatar-zone ${activeZones.has("calves-back") ? "avatar-zone--active" : ""}" x="81" y="57" width="6" height="9" rx="3"></rect>
+        <rect class="avatar-zone ${activeZones.has("calves-back") ? "avatar-zone--active" : ""}" x="89" y="57" width="6" height="9" rx="3"></rect>
+      </g>
+    </svg>
+  `;
+}
+
+function zonesForMuscles(muscles) {
+  const zoneMap = {
+    all: ["shoulders-front", "chest", "biceps-front", "core", "legs-front", "calves-front", "shoulders-back", "back", "triceps-back", "glutes", "hamstrings", "calves-back"],
+    chest: ["chest"],
+    back: ["back", "shoulders-back"],
+    shoulders: ["shoulders-front", "shoulders-back"],
+    biceps: ["biceps-front"],
+    triceps: ["triceps-back"],
+    core: ["core"],
+    legs: ["legs-front"],
+    hamstrings: ["hamstrings"],
+    glutes: ["glutes"],
+    calves: ["calves-front", "calves-back"],
+    cardio: ["legs-front", "calves-front", "back"]
+  };
+  return muscles.flatMap((muscle) => zoneMap[muscle] || []);
 }
 
 function paintSyncMeta(meta) {
@@ -1751,9 +2320,42 @@ function formatSuggestedWeight(product) {
   return ` - Pes suggerit ${weight} kg`;
 }
 
+function formatSuggestedWeightCompact(product) {
+  const weight = product?.suggestedWeightKg;
+  if (typeof weight !== "number") {
+    return "";
+  }
+  if (product.loadSystem === "plate_loaded") {
+    return `${weight} kg en discs`;
+  }
+  if (product.loadSystem === "stack") {
+    return `${weight} kg stack`;
+  }
+  if (product.loadSystem === "free_weight") {
+    return `${weight} kg lliure`;
+  }
+  return `${weight} kg`;
+}
+
 function formatLastWeight(productId) {
   const weight = state.usageStats.lastWeightByProduct[productId]?.weightKg;
   return typeof weight === "number" ? ` - Ultim pes ${weight} kg` : "";
+}
+
+function formatLastWeightCompact(productId) {
+  const weight = state.usageStats.lastWeightByProduct[productId]?.weightKg;
+  return typeof weight === "number" ? `Ultim ${weight} kg` : "";
+}
+
+function trimSentence(value, maxLength) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (!text) {
+    return "";
+  }
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return `${text.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
 }
 
 function getActiveSession() {
@@ -1834,17 +2436,9 @@ async function copyLatestSession() {
 }
 
 async function handleTodayPlanStart() {
-  const recommendationPool = getRecommendationPool();
-  const routine = buildRoutine(recommendationPool, state, state.usageStats);
-  if (routine.exercises.length === 0) {
+  const session = await ensureGuidedPlanSession();
+  if (!session) {
     return;
-  }
-
-  const session = await ensureActiveWorkoutSession();
-  if (!session.guidedPlan || !session.guidedPlan.steps?.length || getCurrentGuidedStep(session.guidedPlan) === null) {
-    session.guidedPlan = buildGuidedPlan(routine, recommendationPool);
-    session.guidedPlan.startedAt = new Date().toISOString();
-    await persistSession(session);
   }
 
   renderAll();
@@ -1899,27 +2493,90 @@ async function handleTodayPlanLog() {
 }
 
 async function handleTodayPlanAlternative() {
-  const activeSession = getActiveSession();
+  if (elements.todayPlanAlternatives && !elements.todayPlanAlternatives.hidden) {
+    elements.todayPlanAlternatives.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    elements.todayPlanAlternatives.querySelector("[data-alt-index]")?.focus();
+    return;
+  }
+
+  const activeSession = await ensureGuidedPlanSession();
   const plan = activeSession?.guidedPlan;
   const currentStep = getCurrentGuidedStep(plan);
   if (!activeSession || !plan || !currentStep || !currentStep.alternativeOptions?.length) {
     return;
   }
 
-  const nextAlternative = currentStep.alternativeOptions.shift();
+  await applyGuidedAlternativeSwap(activeSession, currentStep, 0);
+}
+
+async function handleTodayPlanAlternativeRailClick(event) {
+  const button = event.target.closest("[data-alt-index]");
+  if (!button) {
+    return;
+  }
+
+  const activeSession = await ensureGuidedPlanSession();
+  const plan = activeSession?.guidedPlan;
+  const currentStep = getCurrentGuidedStep(plan);
+  if (!activeSession || !plan || !currentStep) {
+    return;
+  }
+
+  const alternativeIndex = Number(button.dataset.altIndex || 0);
+  await applyGuidedAlternativeSwap(activeSession, currentStep, alternativeIndex);
+}
+
+async function ensureGuidedPlanSession() {
+  let session = getActiveSession();
+  if (session?.guidedPlan?.steps?.length && getCurrentGuidedStep(session.guidedPlan)) {
+    return session;
+  }
+
+  const recommendationPool = getRecommendationPool();
+  const routine = buildRoutine(recommendationPool, state, state.usageStats);
+  if (routine.exercises.length === 0) {
+    return null;
+  }
+
+  session = await ensureActiveWorkoutSession();
+  session.guidedPlan = buildGuidedPlan(routine, recommendationPool);
+  session.guidedPlan.startedAt = new Date().toISOString();
+  await persistSession(session);
+  return session;
+}
+
+async function applyGuidedAlternativeSwap(activeSession, currentStep, alternativeIndex) {
+  const nextAlternative = currentStep.alternativeOptions?.splice(alternativeIndex, 1)[0];
   if (!nextAlternative) {
     return;
   }
 
+  const previousStepSnapshot = {
+    ...currentStep,
+    collections: [...(currentStep.collections || [])],
+    collectionHandles: [...(currentStep.collectionHandles || [])],
+    muscleGroups: [...(currentStep.muscleGroups || [])],
+    imageUrls: [...(currentStep.imageUrls || [])],
+    equipment: [...(currentStep.equipment || [])],
+    progressions: [...(currentStep.progressions || [])],
+    regressions: [...(currentStep.regressions || [])],
+    safetyNotes: [...(currentStep.safetyNotes || [])]
+  };
+  const preservedId = currentStep.id;
   const previousTitle = currentStep.title;
+  const remainingOptions = [...(currentStep.alternativeOptions || [])];
   copyGuidedStepFields(currentStep, nextAlternative);
-  currentStep.id = currentStep.id;
+  currentStep.id = preservedId;
   currentStep.status = "pending";
   currentStep.completedAt = null;
   currentStep.skippedAt = null;
   currentStep.skipReason = null;
   currentStep.alternativeOf = currentStep.alternativeOf || previousTitle;
   currentStep.swapCount = (currentStep.swapCount || 0) + 1;
+  const fallbackOption = buildGuidedStepPayload(previousStepSnapshot, currentStep.position - 1, currentStep.totalSteps, null, true);
+  fallbackOption.alternativeOptions = [];
+  currentStep.alternativeOptions = dedupeAlternativeOptions([...remainingOptions, fallbackOption], currentStep.title);
+  const plan = activeSession.guidedPlan;
   plan.updatedAt = new Date().toISOString();
   await persistSession(activeSession);
   await notifyUser("Alternativa carregada", `Canvia a ${currentStep.title}.`);
@@ -1991,6 +2648,18 @@ async function completeGuidedPlanStep(stepId, details) {
 
 function getCurrentGuidedStep(plan) {
   return plan?.steps?.find((step) => step.status === "pending") || null;
+}
+
+function dedupeAlternativeOptions(options, currentTitle) {
+  const seen = new Set([normalizeLookupText(currentTitle)]);
+  return (options || []).filter((option) => {
+    const key = normalizeLookupText(option.title);
+    if (!key || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 function copyGuidedStepFields(target, source) {

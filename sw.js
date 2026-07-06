@@ -1,4 +1,4 @@
-const STATIC_CACHE = "gymbros-shell-v5";
+const STATIC_CACHE = "gymbros-shell-v6";
 const IMAGE_CACHE = "gymbros-images-v1";
 const APP_SHELL = [
   "./",

@@ -78,6 +78,16 @@ async function replaceAll(storeName, values) {
   });
 }
 
+async function deleteOne(storeName, key) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, "readwrite");
+    transaction.objectStore(storeName).delete(key);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
 async function getOne(storeName, key) {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
@@ -103,6 +113,57 @@ export const writeUsageEventAndSession = (usageEvent, session) => putMany([
   { storeName: USAGE_STORE, value: usageEvent },
   { storeName: SESSION_STORE, value: session }
 ]);
+export async function replaceSessionUsageEvents(session, usageEvents) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([SESSION_STORE, USAGE_STORE], "readwrite");
+    const sessionStore = transaction.objectStore(SESSION_STORE);
+    const usageStore = transaction.objectStore(USAGE_STORE);
+
+    sessionStore.put(session);
+    const cursorRequest = usageStore.openCursor();
+    cursorRequest.onerror = () => reject(cursorRequest.error);
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+      if (!cursor) {
+        usageEvents.forEach((event) => usageStore.put(event));
+        return;
+      }
+      if (cursor.value?.sessionId === session.id) {
+        cursor.delete();
+      }
+      cursor.continue();
+    };
+
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+export async function deleteSessionCascade(sessionId) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([SESSION_STORE, USAGE_STORE], "readwrite");
+    const sessionStore = transaction.objectStore(SESSION_STORE);
+    const usageStore = transaction.objectStore(USAGE_STORE);
+
+    sessionStore.delete(sessionId);
+    const cursorRequest = usageStore.openCursor();
+    cursorRequest.onerror = () => reject(cursorRequest.error);
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+      if (!cursor) {
+        return;
+      }
+      if (cursor.value?.sessionId === sessionId) {
+        cursor.delete();
+      }
+      cursor.continue();
+    };
+
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
 export const readCustomExercises = () => getAll(CUSTOM_EXERCISE_STORE);
 export const writeCustomExercise = (value) => putOne(CUSTOM_EXERCISE_STORE, value);
 export const readRoutineDays = () => getAll(ROUTINE_DAY_STORE);
