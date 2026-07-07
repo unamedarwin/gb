@@ -23,19 +23,17 @@
         </button>
         <div class="shell-bar__copy">
           <p class="shell-bar__label">Menu</p>
-          <strong id="current-section-label" x-text="currentSectionLabel">Comencar</strong>
+          <strong id="current-section-label" x-text="currentSectionLabel">Inici</strong>
         </div>
       </div>
       <div id="nav-scrim" class="nav-scrim" x-cloak x-show="navOpen" @click="closeNav()"></div>
 
-      <header class="hero" :class="{ 'hero--compact': !isActive('section-discover') }" :inert="navOpen ? '' : null" :aria-hidden="navOpen ? 'true' : 'false'">
+      <header class="hero" :class="{ 'hero--compact': !isActive('section-discover') }" :data-section="activeSectionId" :inert="navOpen ? '' : null" :aria-hidden="navOpen ? 'true' : 'false'">
         <div class="hero__copy">
           <h1>GymBro's</h1>
-          <p class="hero__lede">Entrena avui. Guarda progres. Mantingues el cos en joc.</p>
+          <p class="hero__lede">Checklist del cos. Entra, entrena i guarda.</p>
           <div class="hero__actions">
-            <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Comenca entrenament</button>
-            <button id="sync-button" class="button button--secondary" type="button">Sincronitza cataleg</button>
-            <button id="cache-images-button" class="button button--ghost" type="button">Precarrega imatges</button>
+            <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Obre avui</button>
           </div>
           <div class="hero__meta">
             <span id="catalog-status" class="status-pill">Sense sincronitzar</span>
@@ -43,24 +41,35 @@
           </div>
         </div>
         <aside class="hero__panel">
-          <h2>Mode local</h2>
+          <div class="hero__compact-intro" x-cloak x-show="!isActive('section-discover')">
+            <span class="hero__compact-icon" x-html="compactSectionIcon" aria-hidden="true"></span>
+            <div class="hero__compact-copy">
+              <p class="hero__compact-kicker" x-text="compactSectionEyebrow">Flux actual</p>
+              <strong class="hero__compact-title" x-text="currentSectionLabel">Inici</strong>
+            </div>
+          </div>
+          <h2>PWA local-first</h2>
           <div class="hero__signals">
             <div class="signal-card">
-              <span class="signal-card__label">Arrencada</span>
-              <strong class="signal-card__value">Sense sync</strong>
+              <span class="signal-card__label">Ruta curta</span>
+              <strong class="signal-card__value">Avui o sense maquines</strong>
             </div>
             <div class="signal-card">
               <span class="signal-card__label">Dades</span>
-              <strong class="signal-card__value">Tot al dispositiu</strong>
+              <strong class="signal-card__value">Local i sense login</strong>
             </div>
             <div class="signal-card">
-              <span class="signal-card__label">Flux</span>
-              <strong class="signal-card__value">Primer exercici rapid</strong>
+              <span class="signal-card__label">Cataleg</span>
+              <strong class="signal-card__value">Opcional, no bloqueja</strong>
             </div>
           </div>
           <p id="progress-text" class="progress-copy">Tot llest per arrencar.</p>
           <div class="progress-bar" aria-hidden="true">
             <div id="progress-fill" class="progress-bar__fill"></div>
+          </div>
+          <div class="hero__panel-actions">
+            <button id="sync-button" class="button button--ghost" type="button" x-cloak x-show="isActive('section-discover') || isActive('section-catalog')">Sincronitza cataleg</button>
+            <button id="cache-images-button" class="button button--ghost" type="button">Precarrega imatges</button>
           </div>
         </aside>
       </header>
@@ -70,32 +79,29 @@
           <div class="app-nav__head">
             <div>
               <p class="app-nav__label">GymBro's</p>
-              <strong class="app-nav__title">Seccions</strong>
+              <strong class="app-nav__title">Fluxos</strong>
             </div>
             <button id="nav-close" class="app-nav__close button button--ghost" type="button" aria-label="Tanca el menu" @click="closeNav()">Tanca</button>
           </div>
           <div class="app-nav__group">
-            <p class="app-nav__label">Descobreix</p>
-            <a class="app-nav__link" href="#section-discover" data-section-target="section-discover" :class="{ 'is-active': isActive('section-discover') }" :aria-current="isActive('section-discover') ? 'page' : null" @click.prevent="goTo('section-discover')">Comencar</a>
-            <a class="app-nav__link" href="#section-recommendations" data-section-target="section-recommendations" :class="{ 'is-active': isActive('section-recommendations') }" :aria-current="isActive('section-recommendations') ? 'page' : null" @click.prevent="goTo('section-recommendations')">Entrenament d'avui</a>
+            <p class="app-nav__label">Principal</p>
+            <a class="app-nav__link" href="#section-discover" data-section-target="section-discover" :class="{ 'is-active': isActive('section-discover') }" :aria-current="isActive('section-discover') ? 'page' : null" @click.prevent="goTo('section-discover')">Inici</a>
+            <a class="app-nav__link" href="#section-recommendations" data-section-target="section-recommendations" :class="{ 'is-active': isActive('section-recommendations') }" :aria-current="isActive('section-recommendations') ? 'page' : null" @click.prevent="goTo('section-recommendations')">Avui</a>
+            <a class="app-nav__link" href="#section-log" data-section-target="section-log" :class="{ 'is-active': isActive('section-log') }" :aria-current="isActive('section-log') ? 'page' : null" @click.prevent="goTo('section-log')">Registra</a>
+            <a class="app-nav__link" href="#section-weekly" data-section-target="section-weekly" :class="{ 'is-active': isActive('section-weekly') }" :aria-current="isActive('section-weekly') ? 'page' : null" @click.prevent="goTo('section-weekly')">Setmana</a>
+            <a class="app-nav__link" href="#section-history" data-section-target="section-history" :class="{ 'is-active': isActive('section-history') }" :aria-current="isActive('section-history') ? 'page' : null" @click.prevent="goTo('section-history')">Progres</a>
+          </div>
+          <div class="app-nav__group">
+            <p class="app-nav__label">Utilitats d'entrenament</p>
             <a class="app-nav__link" href="#section-bodyweight" data-section-target="section-bodyweight" :class="{ 'is-active': isActive('section-bodyweight') }" :aria-current="isActive('section-bodyweight') ? 'page' : null" @click.prevent="goTo('section-bodyweight')">Sense maquines</a>
-            <a class="app-nav__link" href="#section-catalog" data-section-target="section-catalog" :class="{ 'is-active': isActive('section-catalog') }" :aria-current="isActive('section-catalog') ? 'page' : null" @click.prevent="goTo('section-catalog')">Cataleg</a>
-          </div>
-          <div class="app-nav__group">
-            <p class="app-nav__label">Planifica</p>
             <a class="app-nav__link" href="#section-planner" data-section-target="section-planner" :class="{ 'is-active': isActive('section-planner') }" :aria-current="isActive('section-planner') ? 'page' : null" @click.prevent="goTo('section-planner')">Pla setmanal</a>
-            <a class="app-nav__link" href="#section-hidden" data-section-target="section-hidden" :class="{ 'is-active': isActive('section-hidden') }" :aria-current="isActive('section-hidden') ? 'page' : null" @click.prevent="goTo('section-hidden')">Configura el teu gimnas</a>
-          </div>
-          <div class="app-nav__group">
-            <p class="app-nav__label">Registra</p>
-            <a class="app-nav__link" href="#section-timers" data-section-target="section-timers" :class="{ 'is-active': isActive('section-timers') }" :aria-current="isActive('section-timers') ? 'page' : null" @click.prevent="goTo('section-timers')">Cronometres</a>
-            <a class="app-nav__link" href="#section-log" data-section-target="section-log" :class="{ 'is-active': isActive('section-log') }" :aria-current="isActive('section-log') ? 'page' : null" @click.prevent="goTo('section-log')">Registre manual</a>
             <a class="app-nav__link" href="#section-session" data-section-target="section-session" :class="{ 'is-active': isActive('section-session') }" :aria-current="isActive('section-session') ? 'page' : null" @click.prevent="goTo('section-session')">Sessio activa</a>
+            <a class="app-nav__link" href="#section-timers" data-section-target="section-timers" :class="{ 'is-active': isActive('section-timers') }" :aria-current="isActive('section-timers') ? 'page' : null" @click.prevent="goTo('section-timers')">Temporitzadors</a>
           </div>
           <div class="app-nav__group">
-            <p class="app-nav__label">Analitza</p>
-            <a class="app-nav__link" href="#section-weekly" data-section-target="section-weekly" :class="{ 'is-active': isActive('section-weekly') }" :aria-current="isActive('section-weekly') ? 'page' : null" @click.prevent="goTo('section-weekly')">Cobertura setmanal</a>
-            <a class="app-nav__link" href="#section-history" data-section-target="section-history" :class="{ 'is-active': isActive('section-history') }" :aria-current="isActive('section-history') ? 'page' : null" @click.prevent="goTo('section-history')">Historic i cos</a>
+            <p class="app-nav__label">Cataleg i gimnas</p>
+            <a class="app-nav__link" href="#section-catalog" data-section-target="section-catalog" :class="{ 'is-active': isActive('section-catalog') }" :aria-current="isActive('section-catalog') ? 'page' : null" @click.prevent="goTo('section-catalog')">Cataleg</a>
+            <a class="app-nav__link" href="#section-hidden" data-section-target="section-hidden" :class="{ 'is-active': isActive('section-hidden') }" :aria-current="isActive('section-hidden') ? 'page' : null" @click.prevent="goTo('section-hidden')">Maquines amagades</a>
           </div>
         </aside>
 
@@ -103,62 +109,173 @@
         <section id="section-discover" class="panel panel--filters" x-cloak x-show="isActive('section-discover')">
           <div class="panel__header">
             <div>
-              <h2>Arrenca avui</h2>
-            </div>
-            <label class="search">
-              <span class="visually-hidden">Buscar maquina</span>
-              <input id="search-input" type="search" placeholder="Buscar (opcional) per nom, etiqueta o serie">
-            </label>
-          </div>
-          <article id="first-use-wizard" class="session-card session-card--compact" hidden>
-            <h3 class="subheading">Via rapida</h3>
-            <p id="first-use-copy" class="summary-text">Tria i comenca.</p>
-            <div class="machine-card__actions">
-              <button class="button button--secondary" type="button" data-first-use-action="bodyweight">Sense maquines</button>
-              <button class="button button--ghost" type="button" data-first-use-action="recommendations">Veure propostes</button>
-              <button class="button button--ghost" type="button" data-first-use-action="gym">Configura el teu gimnas</button>
-              <button class="button button--ghost" type="button" data-first-use-action="dismiss">Omet</button>
-            </div>
-          </article>
-          <div id="muscle-filters" class="chip-row"></div>
-          <div class="toolbar">
-            <label class="toolbar__field">
-              <span>Tipus</span>
-              <select id="equipment-filter">
-                <option value="all">Tot</option>
-                <option value="machine">Maquines</option>
-                <option value="free-weight">Pes lliure</option>
-                <option value="bodyweight">Sense maquines</option>
-                <option value="support">Suport i entrenament</option>
-              </select>
-            </label>
-            <label class="toolbar__field">
-              <span>Ordenacio</span>
-              <select id="sort-filter">
-                <option value="recommended">Recomanat</option>
-                <option value="title">Nom</option>
-                <option value="series">Serie</option>
-              </select>
-            </label>
-          </div>
-          <div class="focus-preview">
-            <div id="discover-focus-map" class="body-map-host" data-size="sm" data-preview="avatar" aria-hidden="true"></div>
-            <div class="focus-preview__copy">
-              <span class="signal-card__label">Focus actual</span>
-              <strong id="discover-focus-label" class="focus-preview__title">Tot el cos</strong>
-              <p id="discover-focus-copy" class="summary-text">Ajusta zona, temps i tipus.</p>
+              <h2>Inici</h2>
+              <p class="summary-text">Avui, registre i focus en una sola pantalla.</p>
             </div>
           </div>
-          <div class="machine-card__actions">
-            <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Veure propostes</button>
-            <button class="button button--ghost" type="button" @click="goTo('section-bodyweight')">Entrenar sense material</button>
+          <div class="dashboard-grid">
+            <article class="dashboard-card dashboard-card--spotlight">
+              <span class="dashboard-card__eyebrow">Flux principal</span>
+              <h3 class="dashboard-card__title">Entrena, registra o repren la sessio.</h3>
+              <p class="summary-text">Aqui no cal pensar gaire: o entres a Avui, o registres, o continues el que ja tens en marxa.</p>
+              <div class="dashboard-action-grid">
+                <button class="dashboard-action" type="button" @click="goTo('section-recommendations')">
+                  <span class="dashboard-action__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M5 12h14"></path>
+                      <path d="M12 5v14"></path>
+                      <path d="M7 7h3"></path>
+                      <path d="M14 14h3"></path>
+                    </svg>
+                  </span>
+                  <span class="dashboard-action__copy">
+                    <strong>Avui</strong>
+                    <span>Sessio guiada</span>
+                  </span>
+                </button>
+                <button class="dashboard-action" type="button" @click="goTo('section-log')">
+                  <span class="dashboard-action__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M7 4h8l4 4v12H7z"></path>
+                      <path d="M15 4v4h4"></path>
+                      <path d="M10 12h6"></path>
+                      <path d="M10 16h4"></path>
+                    </svg>
+                  </span>
+                  <span class="dashboard-action__copy">
+                    <strong>Registra</strong>
+                    <span>Guardat express</span>
+                  </span>
+                </button>
+                <button class="dashboard-action" type="button" @click="goTo('section-session')">
+                  <span class="dashboard-action__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M6 7h12"></path>
+                      <path d="M8 12h8"></path>
+                      <path d="M10 17h4"></path>
+                      <rect x="4" y="4" width="16" height="16" rx="4"></rect>
+                    </svg>
+                  </span>
+                  <span class="dashboard-action__copy">
+                    <strong>Sessio</strong>
+                    <span>Continua o tanca</span>
+                  </span>
+                </button>
+              </div>
+              <div class="dashboard-tag-row">
+                <span class="status-pill">Sense login</span>
+                <span class="status-pill status-pill--dark">Sync opcional</span>
+              </div>
+            </article>
+            <div class="focus-preview focus-preview--dashboard">
+              <div id="discover-focus-map" class="body-map-host" data-size="sm" data-preview="avatar" aria-hidden="true"></div>
+              <div class="focus-preview__copy">
+                <span class="signal-card__label">Focus actual</span>
+                <strong id="discover-focus-label" class="focus-preview__title">Tot el cos</strong>
+                <p id="discover-focus-copy" class="summary-text">Activa zones i afina el tipus de proposta.</p>
+              </div>
+            </div>
+            <article id="first-use-wizard" class="session-card session-card--compact dashboard-card" hidden>
+              <h3 class="subheading">Via rapida</h3>
+              <p id="first-use-copy" class="summary-text">Tria i comenca.</p>
+              <div class="machine-card__actions">
+                <button class="button button--secondary" type="button" data-first-use-action="bodyweight">Sense maquines</button>
+                <button class="button button--ghost" type="button" data-first-use-action="recommendations">Veure propostes</button>
+                <button class="button button--ghost" type="button" data-first-use-action="gym">Marca maquines</button>
+                <button class="button button--ghost" type="button" data-first-use-action="dismiss">Omet</button>
+              </div>
+            </article>
+            <article class="dashboard-card dashboard-card--utilities">
+              <span class="dashboard-card__eyebrow">Utilitats</span>
+              <h3 class="dashboard-card__title">Accesos rapids sense saturar la navegacio.</h3>
+              <div class="utility-link-grid">
+                <button class="utility-link" type="button" @click="goTo('section-weekly')">
+                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path d="M6 7h12"></path>
+                    <path d="M6 12h12"></path>
+                    <path d="M6 17h7"></path>
+                    <path d="M18 16.5 20 18.5l-3.5 3"></path>
+                  </svg>
+                  <span>Setmana</span>
+                </button>
+                <button class="utility-link" type="button" @click="goTo('section-bodyweight')">
+                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path d="M7 8v8"></path>
+                    <path d="M17 8v8"></path>
+                    <path d="M10 12h4"></path>
+                    <path d="M4 10h3v4H4z"></path>
+                    <path d="M17 10h3v4h-3z"></path>
+                  </svg>
+                  <span>Sense maquines</span>
+                </button>
+                <button class="utility-link" type="button" @click="goTo('section-planner')">
+                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path d="M7 4v4"></path>
+                    <path d="M17 4v4"></path>
+                    <path d="M5 9h14"></path>
+                    <rect x="5" y="6" width="14" height="13" rx="3"></rect>
+                  </svg>
+                  <span>Pla setmanal</span>
+                </button>
+                <button class="utility-link" type="button" @click="goTo('section-catalog')">
+                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path d="M5 6h14"></path>
+                    <path d="M5 12h14"></path>
+                    <path d="M5 18h9"></path>
+                  </svg>
+                  <span>Cataleg</span>
+                </button>
+                <button class="utility-link" type="button" @click="goTo('section-session')">
+                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path d="M6 7h12"></path>
+                    <path d="M8 12h8"></path>
+                    <path d="M10 17h4"></path>
+                    <rect x="4" y="4" width="16" height="16" rx="4"></rect>
+                  </svg>
+                  <span>Sessio activa</span>
+                </button>
+              </div>
+            </article>
+          </div>
+          <div class="session-card session-card--compact discover-refine">
+            <div class="discover-refine__header">
+              <div>
+                <h3 class="subheading">Ajust fi</h3>
+                <p class="summary-text">Quan vols afinar millor el focus, el temps o el tipus.</p>
+              </div>
+              <label class="search">
+                <span class="search__label">Buscar maquina</span>
+                <input id="search-input" type="search" placeholder="Buscar (opcional) per nom, etiqueta o serie">
+              </label>
+            </div>
+            <div id="muscle-filters" class="chip-row"></div>
+            <div class="toolbar">
+              <label class="toolbar__field">
+                <span>Tipus</span>
+                <select id="equipment-filter">
+                  <option value="all">Tot</option>
+                  <option value="machine">Maquines</option>
+                  <option value="free-weight">Pes lliure</option>
+                  <option value="bodyweight">Sense maquines</option>
+                  <option value="support">Suport i entrenament</option>
+                </select>
+              </label>
+              <label class="toolbar__field">
+                <span>Ordenacio</span>
+                <select id="sort-filter">
+                  <option value="recommended">Recomanat</option>
+                  <option value="title">Nom</option>
+                  <option value="series">Serie</option>
+                </select>
+              </label>
+            </div>
           </div>
         </section>
 
         <section id="section-recommendations" class="panel" x-cloak x-show="isActive('section-recommendations')">
           <div class="panel__header">
             <div>
-              <h2>Propostes per avui</h2>
+              <h2>Avui</h2>
             </div>
             <p id="summary-text" class="summary-text">Focus, temps i proposta del dia.</p>
           </div>
@@ -173,13 +290,57 @@
               <strong>Cap sessio carregada</strong>
               <span>Genera-la i entra al primer pas.</span>
             </div>
-            <div id="today-plan-alternatives" class="alt-swap-list" hidden></div>
-            <div id="today-plan-actions" class="machine-card__actions">
-              <button id="today-plan-start" class="button button--primary" type="button">Comenca sessio guiada</button>
-              <button id="today-plan-log" class="button button--secondary" type="button">Registrar pas actual</button>
-              <button id="today-plan-alternative" class="button button--ghost" type="button">Maquina ocupada</button>
-              <button id="today-plan-skip" class="button button--ghost" type="button">Saltar pas</button>
-              <button id="today-plan-refresh" class="button button--ghost" type="button">Recalcula</button>
+            <div id="today-plan-empty-actions" class="panel__footer-actions panel__footer-actions--top" hidden>
+              <button id="today-plan-empty-bodyweight" class="button button--secondary" type="button">Sense maquines</button>
+              <button id="today-plan-empty-catalog" class="button button--ghost" type="button">Veure cataleg</button>
+            </div>
+            <div id="today-plan-stage-tabs" class="stage-tabs">
+              <button id="today-plan-stage-current" class="stage-tab is-active" type="button" data-today-stage="current">Pas actual</button>
+              <button id="today-plan-stage-switch" class="stage-tab" type="button" data-today-stage="switch">Canvia maquina</button>
+            </div>
+            <div id="today-plan-stage-current-panel" class="today-plan-stage">
+              <div id="today-plan-actions" class="machine-card__actions">
+                <button id="today-plan-start" class="button button--primary" type="button">Comenca sessio guiada</button>
+                <button id="today-plan-log" class="button button--secondary" type="button">Registrar pas actual</button>
+                <button id="today-plan-skip" class="button button--ghost" type="button">Saltar pas</button>
+                <button id="today-plan-refresh" class="button button--ghost" type="button">Recalcula</button>
+              </div>
+            </div>
+            <div id="today-plan-stage-switch-panel" class="today-plan-stage" hidden>
+              <div class="history-item">
+                <strong>Canviar maquina</strong>
+                <span>Tria si avui esta ocupada o si no existeix al teu gimnas.</span>
+              </div>
+              <div class="availability-actions">
+                <button id="today-plan-occupied" class="availability-option" type="button">
+                  <span class="availability-option__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M6 9V7a6 6 0 0 1 12 0v2"></path>
+                      <rect x="4" y="9" width="16" height="11" rx="3"></rect>
+                      <path d="M12 13v3"></path>
+                    </svg>
+                  </span>
+                  <span class="availability-option__copy">
+                    <strong>Ocupada ara</strong>
+                    <span>Mostra alternatives per aquest pas.</span>
+                  </span>
+                </button>
+                <button id="today-plan-hide" class="availability-option" type="button">
+                  <span class="availability-option__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M4 5h16"></path>
+                      <path d="M6 9h12"></path>
+                      <path d="M8 13h8"></path>
+                      <path d="M4 20 20 4"></path>
+                    </svg>
+                  </span>
+                  <span class="availability-option__copy">
+                    <strong>No hi es al meu gimnas</strong>
+                    <span>L'amaga i no la proposa mes.</span>
+                  </span>
+                </button>
+              </div>
+              <div id="today-plan-alternatives" class="alt-swap-list" hidden></div>
             </div>
           </div>
           <div id="recommendations" class="card-grid card-grid--compact"></div>
@@ -188,14 +349,15 @@
         <section id="section-weekly" class="panel" x-cloak x-show="isActive('section-weekly')">
           <div class="panel__header">
             <div>
-              <h2>Cobertura setmanal</h2>
+              <h2>Checklist setmanal</h2>
             </div>
             <p id="weekly-status" class="summary-text">Setmana buida.</p>
           </div>
           <div id="weekly-alert" class="weekly-alert"></div>
           <div class="panel__footer-actions panel__footer-actions--priority">
             <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Veure propostes</button>
-            <button class="button button--secondary" type="button" @click="goTo('section-log')">Registre manual</button>
+            <button class="button button--secondary" type="button" @click="goTo('section-bodyweight')">Sense maquines</button>
+            <button class="button button--ghost" type="button" @click="goTo('section-planner')">Pla setmanal</button>
           </div>
           <div class="focus-preview focus-preview--status">
             <div id="weekly-focus-map" class="body-map-host" data-size="sm" data-preview="avatar" aria-hidden="true"></div>
@@ -320,7 +482,12 @@
           </div>
           <p class="summary-text">No sortiran a propostes ni al cataleg.</p>
           <div id="hidden-grid" class="card-grid card-grid--compact"></div>
-          <p id="hidden-empty-state" class="empty-state">Encara no has descartat cap maquina.</p>
+          <p id="hidden-empty-state" class="empty-state">Cap bloqueig encara. Quan una maquina no hi sigui, treu-la d'aqui i neteja futures propostes.</p>
+          <div id="hidden-empty-actions" class="panel__footer-actions" hidden>
+            <button class="button button--primary" type="button" @click="goTo('section-catalog')">Veure cataleg</button>
+            <button class="button button--secondary" type="button" @click="goTo('section-recommendations')">Veure propostes</button>
+            <button class="button button--ghost" type="button" @click="goTo('section-bodyweight')">Sense maquines</button>
+          </div>
         </section>
 
         <section id="section-timers" class="panel" x-cloak x-show="isActive('section-timers')">
@@ -352,7 +519,7 @@
               <div class="machine-card__actions">
                 <button id="rest-stop" class="button button--secondary" type="button">Atura descans</button>
                 <button id="notification-permission" class="button button--ghost" type="button">Activa avisos</button>
-                <button id="wake-lock-toggle" class="button button--ghost" type="button">Mante pantalla</button>
+                <button id="wake-lock-toggle" class="button button--ghost" type="button">Evita bloqueig</button>
               </div>
             </div>
           </div>
@@ -365,7 +532,7 @@
         <section id="section-log" class="panel" x-cloak x-show="isActive('section-log')">
           <div class="panel__header">
             <div>
-              <h2>Registrar exercici</h2>
+              <h2>Registre express</h2>
             </div>
             <p id="log-form-status" class="summary-text">Tria exercici i guarda.</p>
           </div>
@@ -462,7 +629,7 @@
               </div>
             </div>
             <div class="session-card session-card--active-secondary">
-              <h3 class="subheading">PRs basics</h3>
+              <h3 class="subheading">Fites de carrega</h3>
               <div id="pr-list" class="pr-list"></div>
             </div>
           </div>
@@ -475,12 +642,12 @@
         <section id="section-history" class="panel" x-cloak x-show="isActive('section-history')">
           <div class="panel__header">
             <div>
-              <h2>Us i calendari</h2>
+              <h2>Progres i historial</h2>
             </div>
             <p id="history-summary" class="summary-text">Encara no hi ha sessions.</p>
           </div>
           <div class="history-layout">
-            <div>
+            <div id="history-calendar-card">
               <div class="calendar-head">
                 <span id="calendar-title"></span>
               </div>
@@ -518,6 +685,60 @@
           </div>
         </section>
       </main>
+        <nav class="mobile-quick-nav" aria-label="Acces rapid mobil">
+          <button class="mobile-quick-nav__item" type="button" :class="{ 'is-active': isActive('section-discover') }" :aria-current="isActive('section-discover') ? 'page' : null" @click="goTo('section-discover')">
+            <span class="mobile-quick-nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M4 11.5 12 5l8 6.5"></path>
+                <path d="M6.5 10.5V19h11v-8.5"></path>
+              </svg>
+            </span>
+            <span>Inici</span>
+          </button>
+          <button class="mobile-quick-nav__item" type="button" :class="{ 'is-active': isActive('section-recommendations') }" :aria-current="isActive('section-recommendations') ? 'page' : null" @click="goTo('section-recommendations')">
+            <span class="mobile-quick-nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M5 12h14"></path>
+                <path d="M12 5v14"></path>
+                <path d="M7 7h3"></path>
+                <path d="M14 14h3"></path>
+              </svg>
+            </span>
+            <span>Avui</span>
+          </button>
+          <button class="mobile-quick-nav__item" type="button" :class="{ 'is-active': isActive('section-log') }" :aria-current="isActive('section-log') ? 'page' : null" @click="goTo('section-log')">
+            <span class="mobile-quick-nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M7 4h8l4 4v12H7z"></path>
+                <path d="M15 4v4h4"></path>
+                <path d="M10 12h6"></path>
+                <path d="M10 16h4"></path>
+              </svg>
+            </span>
+            <span>Registra</span>
+          </button>
+          <button class="mobile-quick-nav__item" type="button" :class="{ 'is-active': isActive('section-weekly') }" :aria-current="isActive('section-weekly') ? 'page' : null" @click="goTo('section-weekly')">
+            <span class="mobile-quick-nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M6 7h12"></path>
+                <path d="M6 12h12"></path>
+                <path d="M6 17h7"></path>
+                <path d="M18 16.5 20 18.5l-3.5 3"></path>
+              </svg>
+            </span>
+            <span>Setmana</span>
+          </button>
+          <button class="mobile-quick-nav__item" type="button" :class="{ 'is-active': isActive('section-history') }" :aria-current="isActive('section-history') ? 'page' : null" @click="goTo('section-history')">
+            <span class="mobile-quick-nav__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M5 19V9"></path>
+                <path d="M12 19V5"></path>
+                <path d="M19 19v-7"></path>
+              </svg>
+            </span>
+            <span>Progres</span>
+          </button>
+        </nav>
       </div>
     </div>
 

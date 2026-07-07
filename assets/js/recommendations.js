@@ -1,4 +1,5 @@
 import { DURATION_OPTIONS, MUSCLE_GROUPS } from "./config.js";
+import { hasSpecificMuscleSelection, matchesSelectedMuscles, selectedMuscleLabels } from "./muscle-ui.js";
 import {
   buildProgressionHint,
   buildProgressionProfile,
@@ -135,8 +136,8 @@ export function filterProducts(products, state, machinePrefs) {
     visible = visible.filter((product) => product.providerId === state.selectedBrand);
   }
 
-  if (state.selectedMuscle !== "all") {
-    visible = visible.filter((product) => product.muscleGroups.includes(state.selectedMuscle) || product.muscleGroups.includes("all"));
+  if (hasSpecificMuscleSelection(state.selectedMuscle)) {
+    visible = visible.filter((product) => matchesSelectedMuscles(product.muscleGroups, state.selectedMuscle));
   }
 
   if (state.selectedEquipmentType !== "all") {
@@ -219,10 +220,10 @@ function recommendationScore(product, state, usageStats) {
   const lastUsed = usageStats.lastUsedDays[product.id];
   const usageCount = usageStats.byProductId[product.id] || 0;
 
-  if (state.selectedMuscle !== "all" && product.muscleGroups.includes(state.selectedMuscle)) {
+  if (hasSpecificMuscleSelection(state.selectedMuscle) && matchesSelectedMuscles(product.muscleGroups, state.selectedMuscle)) {
     score += 8;
   }
-  if (state.selectedMuscle === "all" && product.muscleGroups.some((muscle) => isUndertrained(muscle, usageStats))) {
+  if (!hasSpecificMuscleSelection(state.selectedMuscle) && product.muscleGroups.some((muscle) => isUndertrained(muscle, usageStats))) {
     score += 5;
   }
   if (usageCount > 0) {
@@ -254,8 +255,12 @@ function recommendationScore(product, state, usageStats) {
 }
 
 function buildReason(product, state, usageStats) {
-  if (state.selectedMuscle !== "all" && product.muscleGroups.includes(state.selectedMuscle)) {
-    return "Coincideix amb la zona del cos que has triat.";
+  if (hasSpecificMuscleSelection(state.selectedMuscle) && matchesSelectedMuscles(product.muscleGroups, state.selectedMuscle)) {
+    const labels = selectedMuscleLabels(state.selectedMuscle);
+    if (labels.length === 1) {
+      return "Coincideix amb la zona del cos que has triat.";
+    }
+    return `Coincideix amb ${labels.join(" / ")}.`;
   }
 
   const laggingByRelativeLoad = product.muscleGroups
@@ -380,9 +385,9 @@ function routineExplanation(state, usageStats) {
           ? "rutina rapida"
         : "hipertrofia";
 
-  if (state.selectedMuscle !== "all") {
-    const label = MUSCLE_GROUPS.find((entry) => entry.id === state.selectedMuscle)?.label || state.selectedMuscle;
-    return `${objectiveLabel} per ${label.toLowerCase()}.`;
+  const selectedLabels = selectedMuscleLabels(state.selectedMuscle);
+  if (selectedLabels.length > 0) {
+    return `${objectiveLabel} per ${selectedLabels.join(" + ")}.`;
   }
 
   const weakest = Object.entries(usageStats.byMuscleRecent)
@@ -415,9 +420,9 @@ function routineExplanationCompact(state, usageStats) {
                 ? "rapid"
                 : "hipertrofia";
 
-  if (state.selectedMuscle !== "all") {
-    const label = MUSCLE_GROUPS.find((entry) => entry.id === state.selectedMuscle)?.label || state.selectedMuscle;
-    return `${objectiveLabel} per ${label.toLowerCase()}.`;
+  const selectedLabels = selectedMuscleLabels(state.selectedMuscle);
+  if (selectedLabels.length > 0) {
+    return `${objectiveLabel} per ${selectedLabels.join(" + ")}.`;
   }
 
   const weakest = Object.entries(usageStats.byMuscleRecent)
