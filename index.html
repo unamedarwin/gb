@@ -31,7 +31,7 @@
       <header class="hero" :class="{ 'hero--compact': !isActive('section-discover') }" :inert="navOpen ? '' : null" :aria-hidden="navOpen ? 'true' : 'false'">
         <div class="hero__copy">
           <h1>GymBro's</h1>
-          <p class="hero__lede">Entrena, registra i mantingues l'historic al dispositiu.</p>
+          <p class="hero__lede">Entrena avui. Guarda progres. Mantingues el cos en joc.</p>
           <div class="hero__actions">
             <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Comenca entrenament</button>
             <button id="sync-button" class="button button--secondary" type="button">Sincronitza cataleg</button>
@@ -44,8 +44,21 @@
         </div>
         <aside class="hero__panel">
           <h2>Mode local</h2>
-          <p class="hero__steps">Sincronitza el cataleg quan el necessitis. Les sessions, els pesos i les imatges queden al dispositiu.</p>
-          <p id="progress-text" class="progress-copy">Obre propostes o sense maquines per fer el primer exercici.</p>
+          <div class="hero__signals">
+            <div class="signal-card">
+              <span class="signal-card__label">Arrencada</span>
+              <strong class="signal-card__value">Sense sync</strong>
+            </div>
+            <div class="signal-card">
+              <span class="signal-card__label">Dades</span>
+              <strong class="signal-card__value">Tot al dispositiu</strong>
+            </div>
+            <div class="signal-card">
+              <span class="signal-card__label">Flux</span>
+              <strong class="signal-card__value">Primer exercici rapid</strong>
+            </div>
+          </div>
+          <p id="progress-text" class="progress-copy">Tot llest per arrencar.</p>
           <div class="progress-bar" aria-hidden="true">
             <div id="progress-fill" class="progress-bar__fill"></div>
           </div>
@@ -90,19 +103,19 @@
         <section id="section-discover" class="panel panel--filters" x-cloak x-show="isActive('section-discover')">
           <div class="panel__header">
             <div>
-              <h2>Comenca</h2>
+              <h2>Arrenca avui</h2>
             </div>
             <label class="search">
               <span class="visually-hidden">Buscar maquina</span>
-              <input id="search-input" type="search" placeholder="Buscar per nom, etiqueta o serie">
+              <input id="search-input" type="search" placeholder="Buscar (opcional) per nom, etiqueta o serie">
             </label>
           </div>
-          <article id="first-use-wizard" class="session-card" hidden>
-            <h3 class="subheading">Comenca aqui</h3>
-            <p id="first-use-copy" class="summary-text">Tria la via mes rapida per arribar al primer exercici.</p>
+          <article id="first-use-wizard" class="session-card session-card--compact" hidden>
+            <h3 class="subheading">Via rapida</h3>
+            <p id="first-use-copy" class="summary-text">Tria i comenca.</p>
             <div class="machine-card__actions">
-              <button class="button button--primary" type="button" data-first-use-action="bodyweight">Sense maquines</button>
-              <button class="button button--secondary" type="button" data-first-use-action="recommendations">Veure propostes</button>
+              <button class="button button--secondary" type="button" data-first-use-action="bodyweight">Sense maquines</button>
+              <button class="button button--ghost" type="button" data-first-use-action="recommendations">Veure propostes</button>
               <button class="button button--ghost" type="button" data-first-use-action="gym">Configura el teu gimnas</button>
               <button class="button button--ghost" type="button" data-first-use-action="dismiss">Omet</button>
             </div>
@@ -128,6 +141,14 @@
               </select>
             </label>
           </div>
+          <div class="focus-preview">
+            <div id="discover-focus-map" class="body-map-host" data-size="sm" data-preview="avatar" aria-hidden="true"></div>
+            <div class="focus-preview__copy">
+              <span class="signal-card__label">Focus actual</span>
+              <strong id="discover-focus-label" class="focus-preview__title">Tot el cos</strong>
+              <p id="discover-focus-copy" class="summary-text">Ajusta zona, temps i tipus.</p>
+            </div>
+          </div>
           <div class="machine-card__actions">
             <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Veure propostes</button>
             <button class="button button--ghost" type="button" @click="goTo('section-bodyweight')">Entrenar sense material</button>
@@ -139,18 +160,18 @@
             <div>
               <h2>Propostes per avui</h2>
             </div>
-            <p id="summary-text" class="summary-text">Pots comencar sense sincronitzar amb exercicis sense maquina.</p>
+            <p id="summary-text" class="summary-text">Focus, temps i proposta del dia.</p>
           </div>
           <div id="today-plan-panel" class="session-card session-card--guided">
             <div class="panel__header panel__header--tight">
               <div>
                 <h3 class="subheading">Sessio guiada</h3>
-                <p id="today-plan-summary" class="summary-text">Tria zona, objectiu i temps. GymBro's et proposa l'ordre de la sessio.</p>
+                <p id="today-plan-summary" class="summary-text">Tria focus i temps. L'ordre surt sol.</p>
               </div>
             </div>
             <div id="today-plan-current" class="history-item">
-              <strong>Encara no hi ha sessio carregada</strong>
-              <span>Genera la sessio d'avui per veure el primer pas.</span>
+              <strong>Cap sessio carregada</strong>
+              <span>Genera-la i entra al primer pas.</span>
             </div>
             <div id="today-plan-alternatives" class="alt-swap-list" hidden></div>
             <div id="today-plan-actions" class="machine-card__actions">
@@ -169,15 +190,23 @@
             <div>
               <h2>Cobertura setmanal</h2>
             </div>
-            <p id="weekly-status" class="summary-text">Encara no hi ha activitat registrada aquesta setmana.</p>
+            <p id="weekly-status" class="summary-text">Setmana buida.</p>
           </div>
           <div id="weekly-alert" class="weekly-alert"></div>
+          <div class="panel__footer-actions panel__footer-actions--priority">
+            <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Veure propostes</button>
+            <button class="button button--secondary" type="button" @click="goTo('section-log')">Registre manual</button>
+          </div>
+          <div class="focus-preview focus-preview--status">
+            <div id="weekly-focus-map" class="body-map-host" data-size="sm" data-preview="avatar" aria-hidden="true"></div>
+            <div class="focus-preview__copy">
+              <span class="signal-card__label">Lectura rapida</span>
+              <strong id="weekly-focus-label" class="focus-preview__title">Sense cobertura encara</strong>
+              <p id="weekly-focus-copy" class="summary-text">El mapa puja amb cada sessio guardada.</p>
+            </div>
+          </div>
           <div id="weekly-muscle-grid" class="weekly-muscle-grid"></div>
           <div id="weekly-insights" class="history-list"></div>
-          <div class="panel__footer-actions">
-            <button class="button button--primary" type="button" @click="goTo('section-recommendations')">Veure propostes</button>
-            <button class="button button--ghost" type="button" @click="goTo('section-log')">Registre manual</button>
-          </div>
         </section>
 
         <section id="section-planner" class="panel" x-cloak x-show="isActive('section-planner')">
@@ -185,11 +214,11 @@
             <div>
               <h2>Planificacio setmanal</h2>
             </div>
-            <p id="planner-status" class="summary-text">Crea exercicis propis i assigna'ls a un dia de la setmana o a un bloc A/B/C.</p>
+            <p id="planner-status" class="summary-text">Tria plantilla, dia i carrega.</p>
           </div>
-          <div class="panel__footer-actions panel__footer-actions--top">
-            <button class="button button--primary" type="button" data-scroll-target="planner-form-card">Afegir exercici</button>
-            <button class="button button--ghost" type="button" data-scroll-target="planner-list-card">Veure dies</button>
+          <div id="planner-mode-actions" class="panel__footer-actions panel__footer-actions--top planner-mode-switch">
+            <button id="planner-mode-form" class="button button--primary" type="button" data-planner-mode="form" aria-pressed="true">Afegir exercici</button>
+            <button id="planner-mode-list" class="button button--ghost" type="button" data-planner-mode="list" aria-pressed="false">Veure dies</button>
           </div>
           <div class="session-layout session-layout--planner">
             <div id="planner-list-card" class="session-card session-card--planner-list">
@@ -204,39 +233,53 @@
                   <select id="exercise-day" name="dayId"></select>
                 </label>
                 <label class="toolbar__field">
-                  <span>Nom</span>
-                  <input name="name" type="text" required placeholder="Ex. Flexions inclinades">
+                  <span>Plantilla</span>
+                  <select id="exercise-template" name="templateId"></select>
                 </label>
-                <label class="toolbar__field">
-                  <span>Zona / equip</span>
-                  <select id="exercise-gym-area" name="gymArea"></select>
+                <label id="exercise-custom-name-field" class="toolbar__field" hidden>
+                  <span>Nom personalitzat</span>
+                  <input id="exercise-custom-name" name="customName" type="text" placeholder="Ex. Flexions inclinades">
                 </label>
-                <label class="toolbar__field">
-                  <span>Grup principal</span>
-                  <select id="exercise-primary-muscle" name="primaryMuscle"></select>
-                </label>
-                <label class="toolbar__field">
-                  <span>Secundaris</span>
-                  <select id="exercise-secondary-muscles" name="secondaryMuscles" multiple size="4"></select>
-                </label>
-                <div class="planner-form__row">
+                <div id="exercise-details" class="planner-form__details" hidden>
                   <label class="toolbar__field">
-                    <span>Series</span>
-                    <select id="exercise-sets" name="sets"></select>
+                    <span>Zona / equip</span>
+                    <select id="exercise-gym-area" name="gymArea"></select>
                   </label>
                   <label class="toolbar__field">
-                    <span>Reps</span>
-                    <select id="exercise-reps" name="reps"></select>
+                    <span>Grup principal</span>
+                    <select id="exercise-primary-muscle" name="primaryMuscle"></select>
                   </label>
                   <label class="toolbar__field">
-                    <span>Pes kg</span>
-                    <input name="weightKg" type="number" step="0.5" min="0" placeholder="0">
+                    <span>Secundaris</span>
+                    <select id="exercise-secondary-muscles" name="secondaryMuscles" multiple size="4"></select>
                   </label>
+                  <div class="planner-form__row">
+                    <label class="toolbar__field">
+                      <span>Series</span>
+                      <select id="exercise-sets" name="sets"></select>
+                    </label>
+                    <label class="toolbar__field">
+                      <span>Reps</span>
+                      <select id="exercise-reps" name="reps"></select>
+                    </label>
+                    <label class="toolbar__field">
+                      <span>Pes kg</span>
+                      <select id="exercise-weight" name="weightKg"></select>
+                    </label>
+                  </div>
+                  <label class="toolbar__field">
+                    <span>Notes</span>
+                    <select id="exercise-notes" name="notes"></select>
+                  </label>
+                  <div class="focus-preview focus-preview--form">
+                    <div id="planner-focus-map" class="body-map-host" data-size="sm" data-preview="avatar" aria-hidden="true"></div>
+                    <div class="focus-preview__copy">
+                      <span class="signal-card__label">Focus de l'exercici</span>
+                      <strong id="planner-focus-label" class="focus-preview__title">Tria una plantilla</strong>
+                      <p id="planner-focus-copy" class="summary-text">El mapa et confirma el patro abans de guardar.</p>
+                    </div>
+                  </div>
                 </div>
-                <label class="toolbar__field">
-                  <span>Notes</span>
-                  <textarea name="notes" rows="3" placeholder="Tecnica, descans, cues..."></textarea>
-                </label>
                 <button class="button button--primary" type="submit">Guardar al pla</button>
               </form>
             </div>
@@ -248,7 +291,7 @@
             <div>
               <h2>Sense maquines</h2>
             </div>
-            <p id="bodyweight-summary" class="summary-text">Exercicis sense maquines llestos per al primer entrenament.</p>
+            <p id="bodyweight-summary" class="summary-text">Treball sense material, llest per avui.</p>
           </div>
           <div id="bodyweight-grid" class="card-grid card-grid--compact"></div>
         </section>
@@ -275,7 +318,7 @@
             </div>
             <p id="hidden-count" class="summary-text">0 descartades</p>
           </div>
-          <p class="summary-text">No tornaran a sortir a recomanacions ni al cataleg filtrat.</p>
+          <p class="summary-text">No sortiran a propostes ni al cataleg.</p>
           <div id="hidden-grid" class="card-grid card-grid--compact"></div>
           <p id="hidden-empty-state" class="empty-state">Encara no has descartat cap maquina.</p>
         </section>
@@ -285,7 +328,7 @@
             <div>
               <h2>Cronometres</h2>
             </div>
-            <p id="notification-status" class="summary-text">Comprovant suport de notificacions...</p>
+            <p id="notification-status" class="summary-text">Revisant avisos locals...</p>
           </div>
           <div class="timer-layout">
             <div class="timer-card timer-card--session">
@@ -324,8 +367,9 @@
             <div>
               <h2>Registrar exercici</h2>
             </div>
-            <p id="log-form-status" class="summary-text">Selecciona un exercici conegut per registrar-lo.</p>
+            <p id="log-form-status" class="summary-text">Tria exercici i guarda.</p>
           </div>
+          <div id="log-quick-picks" class="chip-row"></div>
           <form id="log-form" class="planner-form">
             <label class="toolbar__field">
               <span>Exercici</span>
@@ -340,18 +384,30 @@
                 <span>Reps / temps</span>
                 <select id="log-form-reps" name="reps"></select>
               </label>
-              <label class="toolbar__field">
-                <span>Pes kg</span>
-                <input id="log-form-weight" name="weightKg" type="number" step="0.5" min="0" placeholder="0">
-              </label>
             </div>
-            <label class="toolbar__field">
-              <span>Notes</span>
-              <textarea id="log-form-notes" name="notes" rows="3" placeholder="Tecnica, descans, sensacions..."></textarea>
-            </label>
-            <div class="machine-card__actions">
+            <div class="machine-card__actions log-form__actions">
               <button id="log-form-submit" class="button button--primary" type="submit">Guardar registre</button>
               <button id="log-form-cancel" class="button button--ghost" type="button">Cancel.la</button>
+            </div>
+            <div class="log-form__details">
+              <div class="planner-form__row planner-form__row--optional">
+                <label class="toolbar__field">
+                  <span>Pes kg</span>
+                  <select id="log-form-weight" name="weightKg"></select>
+                </label>
+                <label class="toolbar__field">
+                  <span>Notes</span>
+                  <select id="log-form-notes" name="notes"></select>
+                </label>
+              </div>
+              <div class="focus-preview focus-preview--form">
+                <div id="log-focus-map" class="body-map-host" data-size="sm" data-preview="avatar" aria-hidden="true"></div>
+                <div class="focus-preview__copy">
+                  <span class="signal-card__label">Muscul treballat</span>
+                  <strong id="log-focus-label" class="focus-preview__title">Cap exercici triat</strong>
+                  <p id="log-focus-copy" class="summary-text">Quan tries exercici, el focus es veu aqui.</p>
+                </div>
+              </div>
             </div>
           </form>
           <div id="log-next-actions" class="machine-card__actions" hidden>
@@ -367,7 +423,7 @@
             <div>
               <h2>Sessio activa</h2>
             </div>
-            <p id="session-status" class="summary-text">Encara no hi ha cap sessio activa.</p>
+            <p id="session-status" class="summary-text">Cap sessio activa.</p>
           </div>
           <div class="session-layout session-layout--active">
             <div class="session-card session-card--active-primary">
@@ -388,7 +444,7 @@
                 <div class="panel__header panel__header--tight">
                   <div>
                     <h3 class="subheading">Editar sessio</h3>
-                    <p id="completed-session-editor-summary" class="summary-text">Ajusta objectiu, exercicis i carrega abans de desar.</p>
+                    <p id="completed-session-editor-summary" class="summary-text">Ajusta objectiu i carrega.</p>
                   </div>
                 </div>
                 <form id="completed-session-form" class="planner-form">
@@ -421,7 +477,7 @@
             <div>
               <h2>Us i calendari</h2>
             </div>
-            <p id="history-summary" class="summary-text">Sense sessions registrades.</p>
+            <p id="history-summary" class="summary-text">Encara no hi ha sessions.</p>
           </div>
           <div class="history-layout">
             <div>
@@ -452,7 +508,7 @@
             <div>
               <h3 class="subheading">Mapa de compensacio muscular</h3>
               <p id="balance-summary" class="summary-text">
-                El mapa es basa en el teu historic de pes registrat. S'anira completant quan hi hagi prou dades per grup muscular.
+                El mapa creix amb cada registre de pes.
               </p>
             </div>
             <div class="body-balance__content">

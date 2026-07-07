@@ -40,7 +40,23 @@ const state = {
   machineSheetCache: {},
   machineSheetRequestToken: 0,
   editingCompletedSessionId: null,
-  editingCompletedSessionDraft: null
+  editingCompletedSessionDraft: null,
+  bodyMapMarkup: "",
+  plannerMobileMode: "form"
+};
+
+const SECTION_CONTEXT = {
+  "section-discover": { progress: 18, text: "Filtra rapid i entra al primer exercici." },
+  "section-recommendations": { progress: 46, text: "Sessio guiada curta, clara i llesta per arrencar." },
+  "section-weekly": { progress: 64, text: "Mira les zones pendents i corregeix la setmana." },
+  "section-planner": { progress: 54, text: "Afegeix nomes el minim i guarda el dia." },
+  "section-bodyweight": { progress: 38, text: "Rutines sense maquina per no perdre el ritme." },
+  "section-catalog": { progress: 24, text: "Cataleg local i sincronitzacio quan et convingui." },
+  "section-hidden": { progress: 28, text: "Ajusta el teu gimnas i neteja futures propostes." },
+  "section-timers": { progress: 58, text: "Temps de sessio i descans sense sortir de l'app." },
+  "section-log": { progress: 72, text: "Registre rapid: exercici, series, reps i guardar." },
+  "section-session": { progress: 78, text: "La sessio activa concentra tot el que vas fent." },
+  "section-history": { progress: 86, text: "Historic, pes i equilibri corporal en un cop d'ull." }
 };
 
 const GYM_AREA_OPTIONS = [
@@ -80,6 +96,264 @@ const REP_SELECT_OPTIONS = [
   { value: "20-30s", label: "20-30 s" },
   { value: "30-45s", label: "30-45 s" },
   { value: "45-60s", label: "45-60 s" }
+];
+
+const NOTE_SELECT_OPTIONS = [
+  { value: "", label: "Sense nota" },
+  { value: "Tecnica controlada", label: "Tecnica controlada" },
+  { value: "Ultima serie dura", label: "Ultima serie dura" },
+  { value: "RIR 2 aprox.", label: "RIR 2 aprox." },
+  { value: "Descans curt", label: "Descans curt" },
+  { value: "Descans llarg", label: "Descans llarg" },
+  { value: "Sense dolor", label: "Sense dolor" },
+  { value: "Core ferm", label: "Core ferm" },
+  { value: "Puja pes la proxima", label: "Puja pes la proxima" },
+  { value: "Baixa pes i prioritza rang", label: "Baixa pes i prioritza rang" }
+];
+
+const WEIGHT_SELECT_OPTIONS = buildWeightSelectOptions();
+
+const EXERCISE_TEMPLATE_OPTIONS = [
+  {
+    id: "machine-chest-press",
+    name: "Chest press guiat",
+    gymArea: "Maquina guiada",
+    primaryMuscle: "chest",
+    secondaryMuscles: ["triceps", "shoulders"],
+    sets: "3",
+    reps: "8-12",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "machine-pec-deck",
+    name: "Pec deck",
+    gymArea: "Maquina guiada",
+    primaryMuscle: "chest",
+    secondaryMuscles: ["shoulders"],
+    sets: "3",
+    reps: "10-15",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "bodyweight-push-up",
+    name: "Flexions",
+    gymArea: "Pes corporal",
+    primaryMuscle: "chest",
+    secondaryMuscles: ["triceps", "shoulders"],
+    sets: "3",
+    reps: "8-12",
+    notes: "Core ferm"
+  },
+  {
+    id: "machine-lat-pulldown",
+    name: "Lat pulldown",
+    gymArea: "Cable / politja",
+    primaryMuscle: "back",
+    secondaryMuscles: ["biceps"],
+    sets: "3",
+    reps: "8-12",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "machine-seated-row",
+    name: "Rem assegut",
+    gymArea: "Maquina guiada",
+    primaryMuscle: "back",
+    secondaryMuscles: ["biceps"],
+    sets: "3",
+    reps: "8-12",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "bodyweight-band-row",
+    name: "Rem amb banda",
+    gymArea: "Banda elastica",
+    primaryMuscle: "back",
+    secondaryMuscles: ["biceps"],
+    sets: "3",
+    reps: "10-15",
+    notes: "Core ferm"
+  },
+  {
+    id: "machine-shoulder-press",
+    name: "Shoulder press",
+    gymArea: "Maquina guiada",
+    primaryMuscle: "shoulders",
+    secondaryMuscles: ["triceps"],
+    sets: "3",
+    reps: "8-12",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "machine-lateral-raise",
+    name: "Elevacions laterals",
+    gymArea: "Mancuernes",
+    primaryMuscle: "shoulders",
+    secondaryMuscles: ["core"],
+    sets: "3",
+    reps: "12-15",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "machine-biceps-curl",
+    name: "Curl de biceps",
+    gymArea: "Mancuernes",
+    primaryMuscle: "biceps",
+    secondaryMuscles: [],
+    sets: "3",
+    reps: "10-15",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "bodyweight-band-curl",
+    name: "Curl amb banda",
+    gymArea: "Banda elastica",
+    primaryMuscle: "biceps",
+    secondaryMuscles: [],
+    sets: "3",
+    reps: "10-15",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "machine-triceps-pushdown",
+    name: "Pushdown a politja",
+    gymArea: "Cable / politja",
+    primaryMuscle: "triceps",
+    secondaryMuscles: [],
+    sets: "3",
+    reps: "10-15",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "bodyweight-chair-dips",
+    name: "Dips en cadira",
+    gymArea: "Pes corporal",
+    primaryMuscle: "triceps",
+    secondaryMuscles: ["shoulders", "chest"],
+    sets: "3",
+    reps: "6-10",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "machine-leg-press",
+    name: "Leg press",
+    gymArea: "Maquina guiada",
+    primaryMuscle: "legs",
+    secondaryMuscles: ["glutes"],
+    sets: "3",
+    reps: "10-15",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "bodyweight-air-squat",
+    name: "Air squat",
+    gymArea: "Pes corporal",
+    primaryMuscle: "legs",
+    secondaryMuscles: ["glutes", "core"],
+    sets: "3",
+    reps: "12-20",
+    notes: "Core ferm"
+  },
+  {
+    id: "bodyweight-step-up",
+    name: "Step-up",
+    gymArea: "Banc",
+    primaryMuscle: "legs",
+    secondaryMuscles: ["glutes", "core"],
+    sets: "3",
+    reps: "8-12",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "machine-leg-curl",
+    name: "Curl femoral",
+    gymArea: "Maquina guiada",
+    primaryMuscle: "hamstrings",
+    secondaryMuscles: ["glutes"],
+    sets: "3",
+    reps: "10-15",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "bodyweight-hamstring-walkout",
+    name: "Hamstring walkout",
+    gymArea: "Core / estoreta",
+    primaryMuscle: "hamstrings",
+    secondaryMuscles: ["glutes", "core"],
+    sets: "3",
+    reps: "6-10",
+    notes: "Core ferm"
+  },
+  {
+    id: "machine-hip-thrust",
+    name: "Hip thrust",
+    gymArea: "Barra",
+    primaryMuscle: "glutes",
+    secondaryMuscles: ["hamstrings", "core"],
+    sets: "3",
+    reps: "8-12",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "bodyweight-glute-bridge",
+    name: "Glute bridge",
+    gymArea: "Core / estoreta",
+    primaryMuscle: "glutes",
+    secondaryMuscles: ["hamstrings", "core"],
+    sets: "3",
+    reps: "12-20",
+    notes: "Core ferm"
+  },
+  {
+    id: "machine-calf-raise",
+    name: "Elevacio de bessons",
+    gymArea: "Maquina guiada",
+    primaryMuscle: "calves",
+    secondaryMuscles: ["legs"],
+    sets: "3",
+    reps: "12-20",
+    notes: "Tecnica controlada"
+  },
+  {
+    id: "bodyweight-plank",
+    name: "Planxa",
+    gymArea: "Core / estoreta",
+    primaryMuscle: "core",
+    secondaryMuscles: ["shoulders"],
+    sets: "3",
+    reps: "30-45s",
+    notes: "Core ferm"
+  },
+  {
+    id: "bodyweight-side-plank",
+    name: "Side plank",
+    gymArea: "Core / estoreta",
+    primaryMuscle: "core",
+    secondaryMuscles: ["shoulders"],
+    sets: "3",
+    reps: "20-30s",
+    notes: "Core ferm"
+  },
+  {
+    id: "cardio-treadmill",
+    name: "Cinta amb pendent",
+    gymArea: "Cardio",
+    primaryMuscle: "cardio",
+    secondaryMuscles: ["legs", "glutes"],
+    sets: "1",
+    reps: "8-20 min",
+    notes: "Descans curt"
+  },
+  {
+    id: "cardio-stairs",
+    name: "Pujar escales",
+    gymArea: "Cardio",
+    primaryMuscle: "cardio",
+    secondaryMuscles: ["legs", "glutes", "calves"],
+    sets: "1",
+    reps: "8-20 min",
+    notes: "Descans curt"
+  }
 ];
 
 const elements = {
@@ -122,14 +396,35 @@ const elements = {
   weeklyMuscleGrid: document.querySelector("#weekly-muscle-grid"),
   weeklyInsights: document.querySelector("#weekly-insights"),
   plannerStatus: document.querySelector("#planner-status"),
+  plannerModeActions: document.querySelector("#planner-mode-actions"),
+  plannerModeForm: document.querySelector("#planner-mode-form"),
+  plannerModeList: document.querySelector("#planner-mode-list"),
+  plannerListCard: document.querySelector("#planner-list-card"),
+  plannerFormCard: document.querySelector("#planner-form-card"),
   routineDayGrid: document.querySelector("#routine-day-grid"),
   exerciseForm: document.querySelector("#exercise-form"),
   exerciseDay: document.querySelector("#exercise-day"),
+  exerciseTemplate: document.querySelector("#exercise-template"),
+  exerciseDetails: document.querySelector("#exercise-details"),
+  exerciseCustomNameField: document.querySelector("#exercise-custom-name-field"),
+  exerciseCustomName: document.querySelector("#exercise-custom-name"),
   exerciseGymArea: document.querySelector("#exercise-gym-area"),
   exercisePrimaryMuscle: document.querySelector("#exercise-primary-muscle"),
   exerciseSecondaryMuscles: document.querySelector("#exercise-secondary-muscles"),
   exerciseSets: document.querySelector("#exercise-sets"),
   exerciseReps: document.querySelector("#exercise-reps"),
+  exerciseWeight: document.querySelector("#exercise-weight"),
+  exerciseNotes: document.querySelector("#exercise-notes"),
+  exerciseSubmit: document.querySelector("#exercise-form button[type='submit']"),
+  discoverFocusMap: document.querySelector("#discover-focus-map"),
+  discoverFocusLabel: document.querySelector("#discover-focus-label"),
+  discoverFocusCopy: document.querySelector("#discover-focus-copy"),
+  plannerFocusMap: document.querySelector("#planner-focus-map"),
+  plannerFocusLabel: document.querySelector("#planner-focus-label"),
+  plannerFocusCopy: document.querySelector("#planner-focus-copy"),
+  weeklyFocusMap: document.querySelector("#weekly-focus-map"),
+  weeklyFocusLabel: document.querySelector("#weekly-focus-label"),
+  weeklyFocusCopy: document.querySelector("#weekly-focus-copy"),
   sessionStatus: document.querySelector("#session-status"),
   activeSessionStart: document.querySelector("#active-session-start"),
   activeSessionEnd: document.querySelector("#active-session-end"),
@@ -164,12 +459,16 @@ const elements = {
   notificationPermission: document.querySelector("#notification-permission"),
   wakeLockToggle: document.querySelector("#wake-lock-toggle"),
   logFormStatus: document.querySelector("#log-form-status"),
+  logQuickPicks: document.querySelector("#log-quick-picks"),
   logForm: document.querySelector("#log-form"),
   logFormExercise: document.querySelector("#log-form-exercise"),
   logFormSets: document.querySelector("#log-form-sets"),
   logFormReps: document.querySelector("#log-form-reps"),
   logFormWeight: document.querySelector("#log-form-weight"),
   logFormNotes: document.querySelector("#log-form-notes"),
+  logFocusMap: document.querySelector("#log-focus-map"),
+  logFocusLabel: document.querySelector("#log-focus-label"),
+  logFocusCopy: document.querySelector("#log-focus-copy"),
   logFormSubmit: document.querySelector("#log-form-submit"),
   logFormCancel: document.querySelector("#log-form-cancel"),
   logNextActions: document.querySelector("#log-next-actions"),
@@ -194,7 +493,10 @@ export async function boot() {
   paintNotificationSupport();
 
   populatePlannerSelects();
+  togglePlannerDetails(false);
+  updatePlannerSubmitState();
   clearLogForm();
+  syncPlannerModeUI();
 
   const [products, meta, prefs, usageEvents, sessions, customExercises, routineDays, firstUseMeta] = await Promise.all([
     readProducts(),
@@ -223,8 +525,10 @@ export async function boot() {
   if (products.length > 0) {
     setProgress(100, "Cataleg recuperat del dispositiu.");
   } else {
-    setProgress(0, "Pots entrenar ara. Sincronitza si vols maquines reals.");
+    setProgress(0, "Pots entrenar ara mateix.");
   }
+
+  paintSectionContext(window.location.hash.replace(/^#/, "") || "section-discover");
 }
 
 function bindEvents() {
@@ -250,8 +554,12 @@ function bindEvents() {
   elements.activeSessionEnd.addEventListener("click", finishActiveWorkoutSession);
   elements.copyLastSession.addEventListener("click", copyLatestSession);
   elements.exerciseForm.addEventListener("submit", handleExerciseFormSubmit);
+  elements.exerciseForm.addEventListener("change", handleExerciseFormChange);
+  elements.exerciseCustomName?.addEventListener("input", updatePlannerSubmitState);
+  elements.plannerModeActions?.addEventListener("click", handlePlannerModeClick);
   elements.completedSessionForm?.addEventListener("submit", handleCompletedSessionFormSubmit);
   elements.completedSessionForm?.addEventListener("input", handleCompletedSessionFormInput);
+  elements.completedSessionForm?.addEventListener("change", handleCompletedSessionFormInput);
   elements.completedSessionForm?.addEventListener("click", handleCompletedSessionFormClick);
   elements.completedSessionCancel?.addEventListener("click", closeCompletedSessionEditor);
   elements.completedSessionDelete?.addEventListener("click", handleCompletedSessionDelete);
@@ -278,6 +586,7 @@ function bindEvents() {
   elements.logForm.addEventListener("submit", handleLogFormSubmit);
   elements.logFormCancel.addEventListener("click", () => clearLogForm());
   elements.logFormExercise.addEventListener("change", handleLogExerciseInput);
+  elements.logQuickPicks?.addEventListener("click", handleLogQuickPickClick);
   elements.logNextActions.addEventListener("click", handleLogNextActionsClick);
   elements.firstUseWizard?.addEventListener("click", handleFirstUseAction);
   elements.machineSheetModal?.addEventListener("click", handleMachineSheetClick);
@@ -286,6 +595,7 @@ function bindEvents() {
   window.addEventListener("gymbros:section-changed", handleSectionChanged);
   window.addEventListener("online", updateOfflineIndicator);
   window.addEventListener("offline", updateOfflineIndicator);
+  window.addEventListener("resize", () => syncPlannerModeUI());
   document.addEventListener("visibilitychange", handleVisibilityChange);
 }
 
@@ -366,6 +676,15 @@ function populatePlannerSelects() {
     .map((option) => `<option value="${option.id}">${option.label}</option>`)
     .join("");
 
+  renderSelectOptions(elements.exerciseTemplate, [
+    { value: "", label: "Selecciona una plantilla guiada" },
+    ...EXERCISE_TEMPLATE_OPTIONS.map((template) => ({
+      value: template.id,
+      label: `${labelForMuscle(template.primaryMuscle)} - ${template.name}`
+    })),
+    { value: "__custom__", label: "Altre / personalitzat" }
+  ]);
+
   const muscleOptions = CHECKLIST_MUSCLE_GROUPS
     .map((muscleId) => `<option value="${muscleId}">${labelForMuscle(muscleId)}</option>`)
     .join("");
@@ -375,8 +694,12 @@ function populatePlannerSelects() {
   renderSelectOptions(elements.exerciseGymArea, GYM_AREA_OPTIONS);
   renderSelectOptions(elements.exerciseSets, SET_SELECT_OPTIONS);
   renderSelectOptions(elements.exerciseReps, REP_SELECT_OPTIONS);
+  renderSelectOptions(elements.exerciseWeight, WEIGHT_SELECT_OPTIONS);
+  renderSelectOptions(elements.exerciseNotes, NOTE_SELECT_OPTIONS);
   renderSelectOptions(elements.logFormSets, SET_SELECT_OPTIONS);
   renderSelectOptions(elements.logFormReps, REP_SELECT_OPTIONS);
+  renderSelectOptions(elements.logFormWeight, WEIGHT_SELECT_OPTIONS);
+  renderSelectOptions(elements.logFormNotes, NOTE_SELECT_OPTIONS);
   renderSelectOptions(elements.completedSessionObjective, OBJECTIVE_OPTIONS.map((option) => ({ value: option.id, label: option.label })));
 }
 
@@ -410,6 +733,184 @@ function setSelectValue(select, value, fallbackLabel = value) {
   select.value = normalizedValue;
 }
 
+function setMultiSelectValues(select, values) {
+  if (!select) {
+    return;
+  }
+  const selected = new Set((values || []).map((value) => String(value)));
+  Array.from(select.options).forEach((option) => {
+    option.selected = selected.has(option.value);
+  });
+}
+
+function buildSelectMarkup(options, selectedValue, fallbackLabel = selectedValue) {
+  const normalizedValue = String(selectedValue ?? "").trim();
+  const list = [...options];
+  if (normalizedValue && !list.some((option) => String(option.value) === normalizedValue)) {
+    list.push({ value: normalizedValue, label: String(fallbackLabel || normalizedValue) });
+  }
+  return list
+    .map((option) => {
+      const optionValue = String(option.value ?? "");
+      const selected = optionValue === normalizedValue ? " selected" : "";
+      return `<option value="${escapeHtml(optionValue)}"${selected}>${escapeHtml(String(option.label ?? optionValue))}</option>`;
+    })
+    .join("");
+}
+
+function findExerciseTemplate(templateId) {
+  return EXERCISE_TEMPLATE_OPTIONS.find((template) => template.id === templateId) || null;
+}
+
+function applyExerciseTemplateToForm(template) {
+  if (!template) {
+    return;
+  }
+
+  setSelectValue(elements.exerciseGymArea, template.gymArea || "");
+  setSelectValue(elements.exercisePrimaryMuscle, template.primaryMuscle || "");
+  setMultiSelectValues(elements.exerciseSecondaryMuscles, template.secondaryMuscles || []);
+  setSelectValue(elements.exerciseSets, template.sets || "");
+  setSelectValue(elements.exerciseReps, template.reps || "");
+  setSelectValue(elements.exerciseWeight, template.weightKg ?? "");
+  setSelectValue(elements.exerciseNotes, template.notes || "");
+}
+
+function togglePlannerCustomNameField(show) {
+  if (!elements.exerciseCustomNameField || !elements.exerciseCustomName) {
+    return;
+  }
+  elements.exerciseCustomNameField.hidden = !show;
+  elements.exerciseCustomName.required = show;
+  if (!show) {
+    elements.exerciseCustomName.value = "";
+  }
+}
+
+function togglePlannerDetails(show) {
+  if (!elements.exerciseDetails) {
+    return;
+  }
+  elements.exerciseDetails.hidden = !show;
+}
+
+function updatePlannerSubmitState() {
+  if (!elements.exerciseSubmit) {
+    return;
+  }
+  const templateId = String(elements.exerciseTemplate?.value || "").trim();
+  const hasTemplate = Boolean(templateId);
+  const needsCustomName = templateId === "__custom__";
+  const hasCustomName = Boolean(String(elements.exerciseCustomName?.value || "").trim());
+  const blocked = !hasTemplate || (needsCustomName && !hasCustomName);
+  elements.exerciseSubmit.disabled = blocked;
+  if (blocked) {
+    elements.exerciseSubmit.textContent = hasTemplate ? "Escriu nom" : "Tria plantilla";
+    elements.exerciseSubmit.title = hasTemplate ? "Cal posar un nom per a l'exercici personalitzat." : "Cal triar una plantilla abans de guardar.";
+    return;
+  }
+  elements.exerciseSubmit.textContent = "Guardar al pla";
+  elements.exerciseSubmit.title = "Guardar al pla";
+}
+
+function handleExerciseFormChange(event) {
+  if (event.target !== elements.exerciseTemplate) {
+    if (event.target === elements.exercisePrimaryMuscle || event.target === elements.exerciseSecondaryMuscles) {
+      renderFocusMaps();
+    }
+    if (event.target === elements.exerciseCustomName) {
+      updatePlannerSubmitState();
+    }
+    return;
+  }
+
+  const templateId = String(elements.exerciseTemplate.value || "").trim();
+  if (templateId === "__custom__") {
+    togglePlannerCustomNameField(true);
+    togglePlannerDetails(true);
+    setMultiSelectValues(elements.exerciseSecondaryMuscles, []);
+    setSelectValue(elements.exerciseNotes, "");
+    setSelectValue(elements.exerciseWeight, "");
+    setSelectValue(elements.exerciseSets, "");
+    setSelectValue(elements.exerciseReps, "");
+    setSelectValue(elements.exerciseGymArea, "");
+    elements.exerciseCustomName.focus();
+    updatePlannerSubmitState();
+    renderFocusMaps();
+    return;
+  }
+
+  togglePlannerCustomNameField(false);
+  const template = findExerciseTemplate(templateId);
+  if (!template) {
+    togglePlannerDetails(false);
+    setSelectValue(elements.exerciseGymArea, "");
+    setSelectValue(elements.exercisePrimaryMuscle, CHECKLIST_MUSCLE_GROUPS[0] || "");
+    setMultiSelectValues(elements.exerciseSecondaryMuscles, []);
+    setSelectValue(elements.exerciseSets, "");
+    setSelectValue(elements.exerciseReps, "");
+    setSelectValue(elements.exerciseWeight, "");
+    setSelectValue(elements.exerciseNotes, "");
+    updatePlannerSubmitState();
+    renderFocusMaps();
+    return;
+  }
+
+  togglePlannerDetails(true);
+  applyExerciseTemplateToForm(template);
+  updatePlannerSubmitState();
+  renderFocusMaps();
+}
+
+function renderLogQuickPicks() {
+  if (!elements.logQuickPicks) {
+    return;
+  }
+
+  const recent = [];
+  const seen = new Set();
+
+  state.usageEvents.forEach((event) => {
+    const key = normalizeLookupText(event.productTitle);
+    if (!key || seen.has(key)) {
+      return;
+    }
+    const context = resolveLogContextFromInput(getLoggableExerciseContexts(), event.productTitle);
+    if (!context) {
+      return;
+    }
+    seen.add(key);
+    recent.push(context);
+  });
+
+  if (recent.length === 0) {
+    const starterNames = ["Planxa", "Air squat", "Flexions", "Rem amb banda"];
+    starterNames.forEach((name) => {
+      const context = resolveLogContextFromInput(getLoggableExerciseContexts(), name);
+      if (context && !seen.has(normalizeLookupText(context.title))) {
+        seen.add(normalizeLookupText(context.title));
+        recent.push(context);
+      }
+    });
+  }
+
+  elements.logQuickPicks.innerHTML = recent.slice(0, 5)
+    .map((context) => `<button class="chip chip--quick" type="button" data-log-quick-pick="${escapeHtml(context.title)}">${escapeHtml(context.title)}</button>`)
+    .join("");
+}
+
+function handleLogQuickPickClick(event) {
+  const button = event.target.closest("[data-log-quick-pick]");
+  if (!button) {
+    return;
+  }
+  const context = resolveLogContextFromInput(getLoggableExerciseContexts(), button.dataset.logQuickPick);
+  if (!context) {
+    return;
+  }
+  openLogForm(context);
+}
+
 function renderFirstUseWizard() {
   if (!elements.firstUseWizard || !elements.firstUseCopy) {
     return;
@@ -425,8 +926,8 @@ function renderFirstUseWizard() {
 
   const hasCatalog = state.products.length > 0;
   elements.firstUseCopy.textContent = hasCatalog
-    ? "Ja tens cataleg local. Ves a propostes, sense maquines o maquines descartades."
-    : "Entrena ara sense sincronitzar o afegeix el cataleg real del gimnas.";
+    ? "Cataleg local llest. Tria ruta."
+    : "Entrena ara o afegeix cataleg.";
 }
 
 async function handleFirstUseAction(event) {
@@ -459,9 +960,25 @@ async function handleFirstUseAction(event) {
 
 function handleSectionChanged(event) {
   const sectionId = event.detail?.sectionId;
+  paintSectionContext(sectionId);
   if (sectionId === "section-log" && !state.pendingLogContext && !elements.logNextActions.hidden) {
     clearLogForm();
   }
+}
+
+function handlePlannerModeClick(event) {
+  const button = event.target.closest("[data-planner-mode]");
+  if (!button) {
+    return;
+  }
+  const isMobile = window.matchMedia("(max-width: 640px)").matches;
+  if (!isMobile) {
+    const target = button.dataset.plannerMode === "list" ? elements.plannerListCard : elements.plannerFormCard;
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  state.plannerMobileMode = button.dataset.plannerMode === "list" ? "list" : "form";
+  syncPlannerModeUI(true);
 }
 
 function handleScrollTargetClick(event) {
@@ -474,6 +991,30 @@ function handleScrollTargetClick(event) {
     return;
   }
   target.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function syncPlannerModeUI(shouldScroll = false) {
+  if (!elements.plannerFormCard || !elements.plannerListCard || !elements.plannerModeForm || !elements.plannerModeList) {
+    return;
+  }
+
+  const isMobile = window.matchMedia("(max-width: 640px)").matches;
+  const showList = isMobile && state.plannerMobileMode === "list";
+  elements.plannerFormCard.hidden = isMobile && showList;
+  elements.plannerListCard.hidden = isMobile && !showList;
+
+  const formActive = !showList;
+  elements.plannerModeForm.classList.toggle("button--primary", formActive);
+  elements.plannerModeForm.classList.toggle("button--ghost", !formActive);
+  elements.plannerModeForm.setAttribute("aria-pressed", String(formActive));
+  elements.plannerModeList.classList.toggle("button--primary", showList);
+  elements.plannerModeList.classList.toggle("button--ghost", !showList);
+  elements.plannerModeList.setAttribute("aria-pressed", String(showList));
+
+  if (shouldScroll) {
+    const target = showList ? elements.plannerListCard : elements.plannerFormCard;
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 async function dismissFirstUseWizard(reason) {
@@ -595,15 +1136,18 @@ function recomputeDerivedState() {
 function renderAll() {
   renderFirstUseWizard();
   renderLogExerciseOptions();
+  renderLogQuickPicks();
   renderRecommendations();
   renderWeeklyChecklist();
   renderRoutinePlanner();
+  renderFocusMaps();
   renderCatalog();
   renderBodyweight();
   renderHidden();
   renderActiveSession();
   renderPersonalRecords();
   renderHistory();
+  syncPlannerModeUI();
   setBusyState();
 }
 
@@ -697,8 +1241,8 @@ function renderRecommendations() {
   if (recommendationPool.length === 0) {
     const machineOnly = state.selectedEquipmentType === "machine" || state.selectedEquipmentType === "free-weight" || state.selectedEquipmentType === "support";
     elements.summaryText.textContent = state.products.length === 0 && machineOnly
-      ? "Sense cataleg local per a aquest filtre. Sincronitza o passa a sense maquines."
-      : "Cap proposta per als filtres actuals.";
+      ? "Sense cataleg local per aquest filtre."
+      : "Cap proposta amb aquest filtre.";
     return;
   }
 
@@ -829,23 +1373,26 @@ function renderTodayPlan(guidedPlan, routine) {
   const hasStartedPlan = Boolean(activePlan?.steps?.length);
 
   if (!renderPlan) {
-    elements.todayPlanSummary.textContent = "Ajusta el filtre i el temps per generar la sessio d'avui.";
+    elements.todayPlanSummary.textContent = "Ajusta focus i temps.";
     elements.todayPlanCurrent.innerHTML = `
       <strong>Cap sessio preparada</strong>
-      <span>Quan hi hagi propostes, veuras l'ordre, el temps i les alternatives de cada pas.</span>
+      <span>Quan hi hagi proposta, veuras el primer pas aqui.</span>
     `;
     elements.todayPlanStart.disabled = true;
     elements.todayPlanLog.disabled = true;
     elements.todayPlanAlternative.disabled = true;
     elements.todayPlanSkip.disabled = true;
     elements.todayPlanRefresh.disabled = true;
+    elements.todayPlanLog.hidden = true;
+    elements.todayPlanAlternative.hidden = true;
+    elements.todayPlanSkip.hidden = true;
     renderTodayPlanAlternatives(null);
     return;
   }
 
   elements.todayPlanSummary.textContent = hasStartedPlan
-    ? `${renderPlan.totalSteps} passos - ${renderPlan.totalEstimatedMinutes} min estimats - ${completedCount} fets${skippedCount ? ` - ${skippedCount} saltats` : ""}`
-    : `${renderPlan.totalSteps} passos - ${renderPlan.totalEstimatedMinutes} min estimats - ${routine.explanation}`;
+    ? `${renderPlan.totalSteps} passos - ${renderPlan.totalEstimatedMinutes} min - ${completedCount} fets${skippedCount ? ` - ${skippedCount} saltats` : ""}`
+    : `${renderPlan.totalSteps} passos - ${renderPlan.totalEstimatedMinutes} min - ${routine.explanation}`;
 
   elements.todayPlanStart.textContent = hasStartedPlan ? "Continua sessio guiada" : "Comenca sessio guiada";
   elements.todayPlanStart.disabled = false;
@@ -854,11 +1401,14 @@ function renderTodayPlan(guidedPlan, routine) {
   elements.todayPlanAlternative.textContent = currentStep?.alternativeOptions?.length ? `${currentStep.alternativeOptions.length} alternatives` : "Maquina ocupada";
   elements.todayPlanSkip.disabled = !currentStep;
   elements.todayPlanRefresh.disabled = hasStartedPlan && completedCount > 0;
+  elements.todayPlanLog.hidden = !hasStartedPlan;
+  elements.todayPlanAlternative.hidden = !hasStartedPlan;
+  elements.todayPlanSkip.hidden = !hasStartedPlan;
 
   if (!currentStep) {
     elements.todayPlanCurrent.innerHTML = `
       <strong>Sessio del dia completada</strong>
-      <span>Has tancat tots els passos. Pots revisar l'historic o generar una sessio nova amb altres filtres.</span>
+      <span>Tot fet. Pots revisar l'historic o recalcular.</span>
     `;
     renderTodayPlanAlternatives(null);
     return;
@@ -869,8 +1419,8 @@ function renderTodayPlan(guidedPlan, routine) {
   const pieces = [
     `<strong>Pas ${currentStep.position}/${currentStep.totalSteps}: ${escapeHtml(currentStep.title)}</strong>`,
     `<span>${escapeHtml(currentStep.prescription || "Sense rang calculat")} - ${formatMinutes(currentStep.stationMinutes)} ${stationLabel} - ${formatTransition(currentStep.transitionSeconds)}</span>`,
-    typeof currentStep.suggestedWeightKg === "number" ? `<span>Pes suggerit: ${escapeHtml(formatSuggestedWeight(currentStep).replace(/^ - /, ""))}</span>` : "",
-    nextAlternative ? `<span>Si esta ocupada: ${escapeHtml(nextAlternative.title)}.</span>` : `<span>Cap alternativa directa disponible: salta el pas si la maquina no esta lliure.</span>`
+    typeof currentStep.suggestedWeightKg === "number" ? `<span>${escapeHtml(formatSuggestedWeight(currentStep).replace(/^ - /, ""))}</span>` : "",
+    nextAlternative ? `<span>Alternativa: ${escapeHtml(nextAlternative.title)}.</span>` : `<span>Sense alternativa directa.</span>`
   ].filter(Boolean);
   elements.todayPlanCurrent.innerHTML = pieces.join("");
   renderTodayPlanAlternatives(currentStep);
@@ -982,10 +1532,10 @@ function renderCatalog() {
       || Boolean(state.searchQuery);
 
     elements.emptyState.textContent = !hasCatalog
-      ? "Encara no hi ha cataleg local. Pots sincronitzar-lo o entrenar sense maquines."
+      ? "Encara no hi ha cataleg local."
       : hasActiveFilters
-        ? "No hi ha resultats per als filtres actuals. Prova una combinacio mes oberta o treballa sense maquines."
-        : "No hi ha fitxes disponibles ara mateix.";
+        ? "No hi ha resultats amb aquest filtre."
+        : "No hi ha fitxes disponibles ara.";
   }
 
   for (const product of state.filteredProducts) {
@@ -998,13 +1548,13 @@ function renderBodyweight() {
 
   elements.bodyweightGrid.innerHTML = "";
   if (state.selectedEquipmentType !== "all" && state.selectedEquipmentType !== "bodyweight") {
-    elements.bodyweightSummary.textContent = "Filtre actual fora d'aquesta seccio.";
+    elements.bodyweightSummary.textContent = "Aquest filtre no encaixa aqui.";
     return;
   }
 
   elements.bodyweightSummary.textContent = state.usageEvents.length === 0
-    ? `${visible.length} exercicis disponibles. Via rapida per al primer entrenament.`
-    : `${visible.length} exercicis sense maquines disponibles.`;
+    ? `${visible.length} exercicis. Via rapida per avui.`
+    : `${visible.length} exercicis sense material.`;
 
   for (const exercise of visible) {
     elements.bodyweightGrid.append(buildCard(exercise, { hiddenMode: false, showPrescription: false, allowToggle: false }));
@@ -1033,19 +1583,18 @@ function renderWeeklyChecklist() {
     alert.className = "weekly-alert__pill";
     alert.textContent = "Setmana encara sense dades";
     elements.weeklyAlert.append(alert);
-    elements.weeklyStatus.textContent = "Registra el primer entrenament per activar la checklist.";
+    elements.weeklyStatus.textContent = "Guarda el primer entrenament.";
+    const card = document.createElement("div");
+    card.className = "weekly-pattern";
+    card.innerHTML = `
+      <strong>Zones per activar</strong>
+      <div class="tag-row">
+        ${weekly.items.map((item) => `<span class="tag">${escapeHtml(labelForMuscle(item.muscleId))}</span>`).join("")}
+      </div>
+    `;
+    elements.weeklyMuscleGrid.append(card);
 
-    for (const item of weekly.items) {
-      const card = document.createElement("div");
-      card.className = "weekly-muscle-card";
-      card.innerHTML = `
-        <strong>${escapeHtml(labelForMuscle(item.muscleId))}</strong>
-        <span class="weekly-muscle-card__count">Sense registres encara</span>
-      `;
-      elements.weeklyMuscleGrid.append(card);
-    }
-
-    ["Objectiu: no acabar la setmana amb mes de 2 grups en vermell."].forEach((text) => {
+    ["No deixis mes de 2 grups en vermell."].forEach((text) => {
       const item = document.createElement("div");
       item.className = "history-item";
       item.textContent = text;
@@ -1063,8 +1612,8 @@ function renderWeeklyChecklist() {
   elements.weeklyAlert.append(alert);
 
   elements.weeklyStatus.textContent = invalid
-    ? `Falten massa zones sense treballar aquesta setmana. El limit es 2 grups en vermell.`
-    : `Cobertura setmanal acceptable segons la regla antipifia.`;
+    ? `Massa zones pendents. El limit es 2 en vermell.`
+    : `Cobertura setmanal dins de regla.`;
 
   for (const item of weekly.items) {
     const card = document.createElement("div");
@@ -1084,15 +1633,168 @@ function renderWeeklyChecklist() {
   });
 }
 
+function renderFocusMaps() {
+  renderDiscoverFocusMap();
+  renderPlannerFocusMap();
+  renderLogFocusMap();
+  renderWeeklyFocusMap();
+}
+
+function renderDiscoverFocusMap() {
+  const selectedMuscles = musclesForVisualFocus(state.selectedMuscle === "all" ? CHECKLIST_MUSCLE_GROUPS : [state.selectedMuscle]);
+  paintFocusMap(elements.discoverFocusMap, selectedMuscles, "accent");
+  if (elements.discoverFocusLabel) {
+    elements.discoverFocusLabel.textContent = state.selectedMuscle === "all" ? "Tot el cos" : labelForMuscle(state.selectedMuscle);
+  }
+  if (elements.discoverFocusCopy) {
+    elements.discoverFocusCopy.textContent = state.selectedMuscle === "all"
+      ? "Vista general per construir la sessio."
+      : "Les propostes prioritzen aquesta zona.";
+  }
+}
+
+function renderPlannerFocusMap() {
+  const template = findExerciseTemplate(String(elements.exerciseTemplate?.value || "").trim());
+  const primary = String(elements.exercisePrimaryMuscle?.value || template?.primaryMuscle || "");
+  const secondary = Array.from(elements.exerciseSecondaryMuscles?.selectedOptions || [])
+    .map((option) => option.value)
+    .filter(Boolean);
+  const selectedMuscles = musclesForVisualFocus([primary, ...secondary]);
+  paintFocusMap(elements.plannerFocusMap, selectedMuscles, "accent");
+  if (elements.plannerFocusLabel) {
+    elements.plannerFocusLabel.textContent = template?.name || (elements.exerciseTemplate?.value === "__custom__" ? "Exercici personalitzat" : "Tria una plantilla");
+  }
+  if (elements.plannerFocusCopy) {
+    elements.plannerFocusCopy.textContent = template
+      ? `${labelForMuscle(primary)} com a focus principal.`
+      : elements.exerciseTemplate?.value === "__custom__"
+        ? "Activa nomes els camps que realment necessites."
+        : "La plantilla t'omple la base i tu ajustes.";
+  }
+}
+
+function renderLogFocusMap() {
+  const context = state.pendingLogContext;
+  const selectedMuscles = musclesForVisualFocus(context?.muscleGroups || []);
+  paintFocusMap(elements.logFocusMap, selectedMuscles, context ? "accent" : "neutral");
+  if (elements.logFocusLabel) {
+    elements.logFocusLabel.textContent = context?.title || "Cap exercici triat";
+  }
+  if (elements.logFocusCopy) {
+    elements.logFocusCopy.textContent = context
+      ? `${labelForMuscle(pickPrimaryMuscle(context.muscleGroups))} en primer pla.`
+      : "Tens accessos rapids just a sobre.";
+  }
+}
+
+function renderWeeklyFocusMap() {
+  const weekly = computeWeeklyChecklist();
+  if (weekly.eventCount === 0) {
+    paintFocusMap(elements.weeklyFocusMap, CHECKLIST_MUSCLE_GROUPS, "neutral");
+    if (elements.weeklyFocusLabel) {
+      elements.weeklyFocusLabel.textContent = "10 zones per activar";
+    }
+    if (elements.weeklyFocusCopy) {
+      elements.weeklyFocusCopy.textContent = "Cap registre encara. Comenca per una sessio curta.";
+    }
+    return;
+  }
+  const pending = weekly.redGroups.map((item) => item.muscleId);
+  const highlighted = pending.length > 0
+    ? musclesForVisualFocus(pending)
+    : musclesForVisualFocus(weekly.items.filter((item) => item.count > 0).map((item) => item.muscleId));
+  paintFocusMap(elements.weeklyFocusMap, highlighted, pending.length > 0 ? "pending" : "success");
+  if (elements.weeklyFocusLabel) {
+    elements.weeklyFocusLabel.textContent = pending.length > 0 ? `${pending.length} zones pendents` : "Cobertura activa";
+  }
+  if (elements.weeklyFocusCopy) {
+    elements.weeklyFocusCopy.textContent = pending.length > 0
+      ? pending.map((muscle) => labelForMuscle(muscle).toLowerCase()).join(" / ")
+      : "El cos ja te treball registrat aquesta setmana.";
+  }
+}
+
+function musclesForVisualFocus(muscles) {
+  const selected = new Set();
+  (muscles || []).forEach((muscle) => {
+    if (!muscle || muscle === "all") {
+      CHECKLIST_MUSCLE_GROUPS.forEach((entry) => selected.add(entry));
+      return;
+    }
+    if (muscle === "cardio") {
+      ["legs", "glutes", "calves", "back", "core"].forEach((entry) => selected.add(entry));
+      return;
+    }
+    selected.add(muscle);
+  });
+  return Array.from(selected);
+}
+
+function paintFocusMap(host, muscles, tone = "accent") {
+  if (!host) {
+    return;
+  }
+
+  if (host.dataset.preview === "avatar") {
+    paintAvatarPreview(host, muscles, tone);
+    return;
+  }
+
+  if (!state.bodyMapMarkup) {
+    return;
+  }
+
+  if (!host.firstElementChild) {
+    host.innerHTML = state.bodyMapMarkup;
+    const svg = host.querySelector("svg");
+    if (svg) {
+      svg.classList.add("body-map");
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      svg.setAttribute("focusable", "false");
+    }
+  }
+
+  const activeMuscles = new Set(muscles || []);
+  const toneColor = tone === "warning"
+    ? "rgb(174 92 56)"
+    : tone === "success"
+      ? "rgb(96 132 104)"
+      : tone === "pending"
+        ? "rgb(150 167 153)"
+      : tone === "neutral"
+        ? "rgb(122 138 151)"
+        : "rgb(207 118 64)";
+
+  host.querySelectorAll("[data-region]").forEach((part) => {
+    const muscle = part.dataset.region;
+    if (muscle === "all") {
+      part.style.opacity = activeMuscles.size > 0 ? "0.42" : "0.22";
+      return;
+    }
+    const shapes = part.querySelectorAll(".region");
+    const active = activeMuscles.has(muscle);
+    shapes.forEach((shape) => {
+      shape.style.fill = toneColor;
+      shape.style.fillOpacity = active ? "0.78" : "0";
+    });
+  });
+}
+
+function paintAvatarPreview(host, muscles, tone) {
+  const selected = muscles?.length ? muscles : ["all"];
+  const primary = selected[0] || "all";
+  host.innerHTML = buildFocusAvatarMarkup(selected, primary, tone);
+}
+
 function renderRoutinePlanner() {
   elements.routineDayGrid.innerHTML = "";
   const totalEntries = state.routineDays.reduce((sum, day) => sum + day.entries.length, 0);
   const plannedCoverage = computePlannedCoverage();
   elements.plannerStatus.textContent = totalEntries === 0
-    ? "Encara no hi ha exercicis planificats."
+    ? "Cap exercici planificat."
     : plannedCoverage.redGroups.length > 2
-      ? `${state.routineDays.length} dies configurats - ${totalEntries} exercicis planificats - pla antipifia invalid (${plannedCoverage.redGroups.length} grups sense cobrir).`
-      : `${state.routineDays.length} dies configurats - ${totalEntries} exercicis planificats - cobertura planificada acceptable.`;
+      ? `${state.routineDays.length} dies - ${totalEntries} exercicis - pla invalid (${plannedCoverage.redGroups.length} grups sense cobrir).`
+      : `${state.routineDays.length} dies - ${totalEntries} exercicis - cobertura correcta.`;
 
   for (const day of state.routineDays) {
     const card = document.createElement("div");
@@ -1157,13 +1859,13 @@ function renderActiveSession() {
   elements.copyLastSession.hidden = Boolean(activeSession) || !latestCompleted;
 
   if (!activeSession) {
-    elements.sessionStatus.textContent = "Encara no hi ha cap sessio activa.";
-    elements.activeSessionSummary.textContent = "Agrupa exercicis, series, reps i pes dins la mateixa sessio.";
+    elements.sessionStatus.textContent = "Cap sessio activa.";
+    elements.activeSessionSummary.textContent = "Quan arrenquis una sessio, el resum surt aqui.";
     const empty = document.createElement("div");
     empty.className = "session-item";
     empty.innerHTML = `
       <strong>Cap registre en curs</strong>
-      <span class="session-item__meta">Inicia una sessio o registra un exercici solt.</span>
+      <span class="session-item__meta">Inicia sessio o guarda un exercici solt.</span>
     `;
     elements.activeSessionList.append(empty);
   } else {
@@ -1201,8 +1903,8 @@ function renderActiveSession() {
     const empty = document.createElement("div");
     empty.className = "session-item";
     empty.innerHTML = `
-      <strong>Sense sessions tancades encara</strong>
-      <span class="session-item__meta">La primera sessio tancada apareixera aqui.</span>
+      <strong>Sense sessions tancades</strong>
+      <span class="session-item__meta">La primera apareixera aqui.</span>
     `;
     elements.completedSessionList.append(empty);
   } else {
@@ -1261,6 +1963,7 @@ function renderCompletedSessionEditor() {
   setSelectValue(elements.completedSessionObjective, draft.objective || "hypertrophy", labelForObjective(draft.objective || "hypertrophy"));
   elements.completedSessionEditorSummary.textContent = `${new Date(draft.startedAt).toLocaleString("ca-ES")} - ${draft.entries.length} exercicis registrats.`;
   elements.completedSessionEntryList.innerHTML = "";
+  const exerciseOptions = getLoggableExerciseContexts().map((context) => ({ value: context.title, label: context.title }));
 
   draft.entries.forEach((entry, index) => {
     const item = document.createElement("div");
@@ -1269,21 +1972,29 @@ function renderCompletedSessionEditor() {
       <div class="planner-form__row">
         <label class="toolbar__field">
           <span>Exercici</span>
-          <input type="text" data-entry-id="${entry.id}" data-field="title" value="${escapeHtml(entry.title || "")}">
+          <select data-entry-id="${entry.id}" data-field="title">
+            ${buildSelectMarkup(exerciseOptions, entry.title || "", entry.title || "")}
+          </select>
         </label>
         <label class="toolbar__field">
           <span>Series</span>
-          <input type="text" data-entry-id="${entry.id}" data-field="sets" value="${escapeHtml(entry.sets || "")}">
+          <select data-entry-id="${entry.id}" data-field="sets">
+            ${buildSelectMarkup(SET_SELECT_OPTIONS, entry.sets || "")}
+          </select>
         </label>
         <label class="toolbar__field">
           <span>Reps / temps</span>
-          <input type="text" data-entry-id="${entry.id}" data-field="reps" value="${escapeHtml(entry.reps || "")}">
+          <select data-entry-id="${entry.id}" data-field="reps">
+            ${buildSelectMarkup(REP_SELECT_OPTIONS, entry.reps || "", entry.reps || "")}
+          </select>
         </label>
       </div>
       <div class="planner-form__row">
         <label class="toolbar__field">
           <span>Pes kg</span>
-          <input type="number" step="0.5" min="0" data-entry-id="${entry.id}" data-field="weightKg" value="${entry.weightKg ?? ""}">
+          <select data-entry-id="${entry.id}" data-field="weightKg">
+            ${buildSelectMarkup(WEIGHT_SELECT_OPTIONS, entry.weightKg ?? "", entry.weightKg ?? "")}
+          </select>
         </label>
         <label class="toolbar__field">
           <span>Musculs</span>
@@ -1295,7 +2006,9 @@ function renderCompletedSessionEditor() {
       </div>
       <label class="toolbar__field">
         <span>Notes</span>
-        <textarea rows="2" data-entry-id="${entry.id}" data-field="notes">${escapeHtml(entry.notes || "")}</textarea>
+        <select data-entry-id="${entry.id}" data-field="notes">
+          ${buildSelectMarkup(NOTE_SELECT_OPTIONS, entry.notes || "", entry.notes || "")}
+        </select>
       </label>
       <span class="session-item__meta">Pas ${index + 1} - ${entry.addedAt ? new Date(entry.addedAt).toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" }) : "hora no disponible"}</span>
     `;
@@ -1322,6 +2035,32 @@ function handleCompletedSessionFormInput(event) {
 
   const entry = draft.entries.find((item) => item.id === entryId);
   if (!entry) {
+    return;
+  }
+
+  if (field === "title") {
+    const selectedContext = resolveLogContextFromInput(getLoggableExerciseContexts(), event.target.value);
+    entry.title = String(event.target.value || "");
+    if (selectedContext) {
+      entry.title = selectedContext.title;
+      entry.exerciseId = selectedContext.exerciseId || selectedContext.productId;
+      entry.muscleGroups = selectedContext.muscleGroups || [];
+      entry.equipmentType = selectedContext.equipmentType || entry.equipmentType;
+      entry.sourceType = selectedContext.sourceType || entry.sourceType;
+      if (!entry.sets && selectedContext.defaultSets) {
+        entry.sets = selectedContext.defaultSets;
+      }
+      if (!entry.reps && selectedContext.defaultReps) {
+        entry.reps = selectedContext.defaultReps;
+      }
+      if (!entry.notes && selectedContext.defaultNotes) {
+        entry.notes = selectedContext.defaultNotes;
+      }
+      if (typeof entry.weightKg !== "number" && typeof selectedContext.defaultWeightKg === "number") {
+        entry.weightKg = selectedContext.defaultWeightKg;
+      }
+    }
+    renderCompletedSessionEditor();
     return;
   }
 
@@ -1431,7 +2170,7 @@ function renderPersonalRecords() {
   if (records.length === 0) {
     const empty = document.createElement("div");
     empty.className = "pr-item";
-    empty.textContent = "Encara no hi ha PRs basics disponibles.";
+    empty.textContent = "Encara no hi ha PRs.";
     elements.prList.append(empty);
     return;
   }
@@ -1451,8 +2190,10 @@ async function handleExerciseFormSubmit(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const formData = new FormData(form);
-  const name = String(formData.get("name") || "").trim();
-  const primaryMuscle = String(formData.get("primaryMuscle") || "").trim();
+  const templateId = String(formData.get("templateId") || "").trim();
+  const template = findExerciseTemplate(templateId);
+  const name = String(formData.get("customName") || "").trim() || template?.name || "";
+  const primaryMuscle = String(formData.get("primaryMuscle") || template?.primaryMuscle || "").trim();
   const dayId = String(formData.get("dayId") || "").trim();
 
   if (!name || !primaryMuscle || !dayId) {
@@ -1466,13 +2207,13 @@ async function handleExerciseFormSubmit(event) {
   const customExercise = {
     id: crypto.randomUUID(),
     name,
-    gymArea: String(formData.get("gymArea") || "").trim(),
+    gymArea: String(formData.get("gymArea") || template?.gymArea || "").trim(),
     primaryMuscle,
     secondaryMuscles: selectedSecondary,
-    sets: String(formData.get("sets") || "").trim(),
-    reps: String(formData.get("reps") || "").trim(),
+    sets: String(formData.get("sets") || template?.sets || "").trim(),
+    reps: String(formData.get("reps") || template?.reps || "").trim(),
     weightKg: parseOptionalNumber(formData.get("weightKg")),
-    notes: String(formData.get("notes") || "").trim(),
+    notes: String(formData.get("notes") || template?.notes || "").trim(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -1500,8 +2241,12 @@ async function handleExerciseFormSubmit(event) {
   await persistRoutineDay(day);
 
   form.reset();
+  togglePlannerCustomNameField(false);
+  togglePlannerDetails(false);
   elements.exerciseDay.value = dayId;
-  elements.exercisePrimaryMuscle.value = primaryMuscle;
+  setMultiSelectValues(elements.exerciseSecondaryMuscles, []);
+  updatePlannerSubmitState();
+  renderFocusMaps();
   recomputeDerivedState();
   renderAll();
 }
@@ -1534,7 +2279,8 @@ function handleLogExerciseInput() {
   if (!rawValue) {
     state.pendingLogContext = null;
     elements.logFormSubmit.disabled = true;
-    elements.logFormStatus.textContent = "Selecciona un exercici conegut per registrar-lo.";
+    elements.logFormStatus.textContent = "Tria un exercici per guardar.";
+    renderFocusMaps();
     return;
   }
 
@@ -1542,7 +2288,8 @@ function handleLogExerciseInput() {
   if (!context) {
     state.pendingLogContext = null;
     elements.logFormSubmit.disabled = true;
-    elements.logFormStatus.textContent = "Exercici no reconegut. Obre'l des d'una fitxa o selecciona'n un de la llista.";
+    elements.logFormStatus.textContent = "Exercici no reconegut.";
+    renderFocusMaps();
     return;
   }
 
@@ -1554,15 +2301,16 @@ function handleLogExerciseInput() {
     setSelectValue(elements.logFormReps, context.defaultReps || "");
   }
   if (!elements.logFormNotes.value) {
-    elements.logFormNotes.value = context.defaultNotes || "";
+    setSelectValue(elements.logFormNotes, context.defaultNotes || "");
   }
   if (!elements.logFormWeight.value && typeof context.defaultWeightKg === "number") {
-    elements.logFormWeight.value = String(context.defaultWeightKg);
+    setSelectValue(elements.logFormWeight, context.defaultWeightKg);
   }
   elements.logFormSubmit.disabled = false;
   elements.logFormStatus.textContent = state.activeSessionId
-    ? `Exercici reconegut: ${context.title}. El registre anira a la sessio activa i a l'historic local.`
-    : `Exercici reconegut: ${context.title}. Completa les dades i desa'l a l'historic local.`;
+    ? `${context.title} llest per a la sessio activa.`
+    : `${context.title} llest per guardar.`;
+  renderFocusMaps();
 }
 
 async function handleLogFormSubmit(event) {
@@ -1651,12 +2399,13 @@ function openLogForm(context) {
   setSelectValue(elements.logFormExercise, context.title, context.title);
   setSelectValue(elements.logFormSets, context.defaultSets || "");
   setSelectValue(elements.logFormReps, context.defaultReps || "", context.defaultReps || "");
-  elements.logFormWeight.value = typeof context.defaultWeightKg === "number" ? String(context.defaultWeightKg) : "";
-  elements.logFormNotes.value = context.defaultNotes || "";
+  setSelectValue(elements.logFormWeight, typeof context.defaultWeightKg === "number" ? context.defaultWeightKg : "");
+  setSelectValue(elements.logFormNotes, context.defaultNotes || "");
   elements.logFormSubmit.disabled = false;
   elements.logFormStatus.textContent = state.activeSessionId
-    ? `Registrant ${context.title}. Aquest registre s'afegira a la sessio activa i a l'historic local.`
-    : `Registrant ${context.title}. Aquest registre es guardara a l'historic local.`;
+    ? `${context.title} anira a la sessio activa.`
+    : `${context.title} anira a l'historic.`;
+  renderFocusMaps();
   window.dispatchEvent(new CustomEvent("gymbros:navigate", { detail: { sectionId: "section-log" } }));
   requestAnimationFrame(() => {
     elements.logFormSets.focus();
@@ -1669,9 +2418,12 @@ function clearLogForm(statusText) {
   setSelectValue(elements.logFormExercise, "");
   setSelectValue(elements.logFormSets, "");
   setSelectValue(elements.logFormReps, "");
+  setSelectValue(elements.logFormWeight, "");
+  setSelectValue(elements.logFormNotes, "");
   elements.logNextActions.hidden = true;
   elements.logFormSubmit.disabled = true;
-  elements.logFormStatus.textContent = statusText || "Selecciona un exercici conegut per registrar-lo.";
+  elements.logFormStatus.textContent = statusText || "Tria un exercici per guardar.";
+  renderFocusMaps();
 }
 
 function handleLogNextActionsClick(event) {
@@ -1751,7 +2503,7 @@ function renderHistory() {
     item.className = "history-item";
     item.innerHTML = `
       <strong>Historic encara buit</strong>
-      <span>Registra el primer exercici per omplir calendari i mapa corporal.</span>
+      <span>Guarda el primer exercici i el mapa arrenca.</span>
     `;
     elements.historyList.append(item);
   }
@@ -1766,15 +2518,35 @@ function renderHistory() {
   }
 
   elements.historySummary.textContent = state.usageStats.total > 0
-    ? `${state.usageStats.total} usos registrats. Les recomanacions compensen zones menys treballades.`
-    : "Sense historial encara. Registra el primer exercici.";
+    ? `${state.usageStats.total} usos registrats. Recomanacions ajustades al teu historic.`
+    : "Sense historial encara. Guarda el primer exercici.";
 
   renderBalanceMap();
 }
 
 function hydrateCardGallery({ gallery, galleryDots, galleryPrev, galleryNext, product }) {
   const imageUrls = Array.from(new Set([...(product.imageUrls || []), product.heroImage].filter(Boolean)));
-  const slides = imageUrls.length ? imageUrls : ["assets/icons/icon-192.png"];
+  if (product.equipmentType === "bodyweight" || imageUrls.length === 0) {
+    gallery.innerHTML = `
+      <div class="machine-card__placeholder machine-card__placeholder--${escapeHtml(product.equipmentType || "support")}">
+        <div class="machine-card__placeholder-copy">
+          <span class="signal-card__label">${escapeHtml(labelForEquipmentType(product.equipmentType))}</span>
+          <strong>${escapeHtml(product.title)}</strong>
+          <span>${escapeHtml(buildMachineActionSummary(product, pickPrimaryMuscle(product.muscleGroups || [])))}</span>
+        </div>
+        <div class="machine-card__placeholder-visual">
+          ${buildFocusAvatarMarkup(product.muscleGroups || ["all"], pickPrimaryMuscle(product.muscleGroups || []), "accent")}
+        </div>
+      </div>
+    `;
+    galleryDots.hidden = true;
+    galleryPrev.hidden = true;
+    galleryNext.hidden = true;
+    galleryDots.innerHTML = "";
+    return;
+  }
+
+  const slides = imageUrls;
 
   gallery.innerHTML = slides
     .map((url, index) => `
@@ -2063,7 +2835,7 @@ function labelForMuscle(muscle) {
 function buildMachineActionSummary(product, primaryMuscle) {
   const normalized = normalizeLookupText(`${product.title} ${product.handle || ""} ${(product.collections || []).join(" ")}`);
   const action = inferMachineAction(normalized, primaryMuscle, product.equipmentType);
-  return `${action} · ${labelForMuscle(primaryMuscle)}`;
+  return `${action} / ${labelForMuscle(primaryMuscle)}`;
 }
 
 function buildMachineCue(product, primaryMuscle) {
@@ -2215,6 +2987,57 @@ function buildMuscleAvatarMarkup(primaryMuscle, muscleGroups) {
   `;
 }
 
+function buildFocusAvatarMarkup(muscles, primaryMuscle, tone = "accent") {
+  const activeZones = new Set(zonesForMuscles(muscles?.length ? muscles : [primaryMuscle || "all"]));
+  const toneClass = tone === "success"
+    ? "muscle-avatar--success"
+    : tone === "pending"
+      ? "muscle-avatar--pending"
+      : tone === "neutral"
+        ? "muscle-avatar--neutral"
+        : "muscle-avatar--accent";
+  return `
+    <div class="muscle-avatar-frame ${toneClass}">
+      <svg class="muscle-avatar muscle-avatar--focus" viewBox="0 0 120 78" role="img" aria-hidden="true" focusable="false">
+        <g class="muscle-avatar__figure muscle-avatar__figure--front">
+          <circle class="avatar-base" cx="28" cy="10" r="6"></circle>
+          <rect class="avatar-base" x="22" y="18" width="12" height="22" rx="6"></rect>
+          <rect class="avatar-base" x="15" y="20" width="5" height="21" rx="2.5"></rect>
+          <rect class="avatar-base" x="36" y="20" width="5" height="21" rx="2.5"></rect>
+          <rect class="avatar-base" x="22" y="40" width="5" height="26" rx="2.5"></rect>
+          <rect class="avatar-base" x="29" y="40" width="5" height="26" rx="2.5"></rect>
+          <rect class="avatar-zone ${activeZones.has("shoulders-front") ? "avatar-zone--active" : ""}" x="18" y="17" width="20" height="8" rx="4"></rect>
+          <rect class="avatar-zone ${activeZones.has("chest") ? "avatar-zone--active" : ""}" x="21" y="23" width="14" height="8" rx="4"></rect>
+          <rect class="avatar-zone ${activeZones.has("biceps-front") ? "avatar-zone--active" : ""}" x="14" y="22" width="5" height="12" rx="2.5"></rect>
+          <rect class="avatar-zone ${activeZones.has("biceps-front") ? "avatar-zone--active" : ""}" x="37" y="22" width="5" height="12" rx="2.5"></rect>
+          <rect class="avatar-zone ${activeZones.has("core") ? "avatar-zone--active" : ""}" x="24" y="31" width="8" height="11" rx="4"></rect>
+          <rect class="avatar-zone ${activeZones.has("legs-front") ? "avatar-zone--active" : ""}" x="21" y="42" width="6" height="14" rx="3"></rect>
+          <rect class="avatar-zone ${activeZones.has("legs-front") ? "avatar-zone--active" : ""}" x="29" y="42" width="6" height="14" rx="3"></rect>
+          <rect class="avatar-zone ${activeZones.has("calves-front") ? "avatar-zone--active" : ""}" x="21" y="56" width="6" height="10" rx="3"></rect>
+          <rect class="avatar-zone ${activeZones.has("calves-front") ? "avatar-zone--active" : ""}" x="29" y="56" width="6" height="10" rx="3"></rect>
+        </g>
+        <g class="muscle-avatar__figure muscle-avatar__figure--back">
+          <circle class="avatar-base" cx="88" cy="10" r="6"></circle>
+          <rect class="avatar-base" x="82" y="18" width="12" height="22" rx="6"></rect>
+          <rect class="avatar-base" x="75" y="20" width="5" height="21" rx="2.5"></rect>
+          <rect class="avatar-base" x="96" y="20" width="5" height="21" rx="2.5"></rect>
+          <rect class="avatar-base" x="82" y="40" width="5" height="26" rx="2.5"></rect>
+          <rect class="avatar-base" x="89" y="40" width="5" height="26" rx="2.5"></rect>
+          <rect class="avatar-zone ${activeZones.has("shoulders-back") ? "avatar-zone--active" : ""}" x="78" y="17" width="20" height="8" rx="4"></rect>
+          <rect class="avatar-zone ${activeZones.has("back") ? "avatar-zone--active" : ""}" x="81" y="23" width="14" height="12" rx="4"></rect>
+          <rect class="avatar-zone ${activeZones.has("triceps-back") ? "avatar-zone--active" : ""}" x="74" y="22" width="5" height="12" rx="2.5"></rect>
+          <rect class="avatar-zone ${activeZones.has("triceps-back") ? "avatar-zone--active" : ""}" x="97" y="22" width="5" height="12" rx="2.5"></rect>
+          <rect class="avatar-zone ${activeZones.has("glutes") ? "avatar-zone--active" : ""}" x="82" y="36" width="12" height="8" rx="4"></rect>
+          <rect class="avatar-zone ${activeZones.has("hamstrings") ? "avatar-zone--active" : ""}" x="81" y="43" width="6" height="14" rx="3"></rect>
+          <rect class="avatar-zone ${activeZones.has("hamstrings") ? "avatar-zone--active" : ""}" x="89" y="43" width="6" height="14" rx="3"></rect>
+          <rect class="avatar-zone ${activeZones.has("calves-back") ? "avatar-zone--active" : ""}" x="81" y="57" width="6" height="9" rx="3"></rect>
+          <rect class="avatar-zone ${activeZones.has("calves-back") ? "avatar-zone--active" : ""}" x="89" y="57" width="6" height="9" rx="3"></rect>
+        </g>
+      </svg>
+    </div>
+  `;
+}
+
 function zonesForMuscles(muscles) {
   const zoneMap = {
     all: ["shoulders-front", "chest", "biceps-front", "core", "legs-front", "calves-front", "shoulders-back", "back", "triceps-back", "glutes", "hamstrings", "calves-back"],
@@ -2284,6 +3107,14 @@ function setBusyState() {
 function setProgress(percentage, text) {
   elements.progressFill.style.width = `${percentage}%`;
   elements.progressText.textContent = text;
+}
+
+function paintSectionContext(sectionId) {
+  if (state.syncInProgress || state.imageCacheInProgress) {
+    return;
+  }
+  const context = SECTION_CONTEXT[sectionId] || SECTION_CONTEXT["section-discover"];
+  setProgress(context.progress, context.text);
 }
 
 function registerServiceWorker() {
@@ -2992,6 +3823,24 @@ function parseOptionalNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function buildWeightSelectOptions() {
+  const weights = [
+    0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30,
+    35, 40, 45, 50, 55, 60, 70, 80, 90, 100, 110, 120
+  ];
+  return [
+    { value: "", label: "Sense dada" },
+    ...weights.map((weight) => ({
+      value: formatWeightOptionValue(weight),
+      label: weight === 0 ? "0 kg (sense pes extern)" : `${formatWeightOptionValue(weight)} kg`
+    }))
+  ];
+}
+
+function formatWeightOptionValue(weight) {
+  return Number.isInteger(weight) ? String(weight) : String(weight).replace(/\.0$/, "");
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -3066,13 +3915,13 @@ function renderBalanceMap() {
     : `<span class="tag">Sense prou dades encara</span>`;
 
   if (available === 0) {
-    elements.balanceSummary.textContent = "Cal registrar pes en diverses zones per omplir el mapa.";
+    elements.balanceSummary.textContent = "Registra pes en diverses zones per omplir el mapa.";
     return;
   }
 
   elements.balanceSummary.textContent = meta.hasEnoughData
-    ? `Mapa ajustat amb factors relatius per grup muscular. Verd mes fort dins el teu historic; vermell mes endarrerit.`
-    : `Lectura preliminar ajustada amb factors relatius. Cal mes historic perque la comparacio sigui fiable.`;
+    ? `Mapa ajustat amb factors relatius. Verd fort; vermell endarrerit.`
+    : `Lectura preliminar amb factors relatius. Cal mes historic.`;
 }
 
 function colorForScore(score) {
@@ -3207,17 +4056,17 @@ function titleCase(value) {
 function paintNotificationSupport() {
   const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
   if (!("Notification" in window)) {
-    elements.notificationStatus.textContent = "Aquest navegador no exposa la Notifications API. GymBro's fara servir avisos dins l'app i so local.";
+    elements.notificationStatus.textContent = "Sense Notifications API. Farem servir avisos dins l'app.";
     return;
   }
 
   if (!standalone && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    elements.notificationStatus.textContent = "A iOS les notificacions completes per PWA requereixen tenir GymBro's instal.lada a la pantalla d'inici.";
+    elements.notificationStatus.textContent = "A iOS, les notificacions completes demanen l'app instal.lada.";
     return;
   }
 
   if (/Android/i.test(navigator.userAgent)) {
-    elements.notificationStatus.textContent = `Android detectat. Estat dels avisos: ${Notification.permission}.`;
+    elements.notificationStatus.textContent = `Android. Estat dels avisos: ${Notification.permission}.`;
     return;
   }
 
@@ -3333,7 +4182,7 @@ function beep() {
 
 async function toggleWakeLock() {
   if (!("wakeLock" in navigator)) {
-    elements.notificationStatus.textContent = "Aquest navegador no suporta Screen Wake Lock.";
+    elements.notificationStatus.textContent = "Aquest navegador no suporta Wake Lock.";
     return;
   }
 
@@ -3349,7 +4198,7 @@ async function toggleWakeLock() {
     elements.wakeLockToggle.textContent = "Pantalla activa";
   } catch (error) {
     console.error(error);
-    elements.notificationStatus.textContent = "No s'ha pogut activar el bloqueig de pantalla.";
+    elements.notificationStatus.textContent = "No s'ha pogut mantenir la pantalla activa.";
   }
 }
 
@@ -3402,6 +4251,7 @@ async function loadBodyMap() {
       throw new Error("No s'ha pogut carregar el body map.");
     }
     const markup = await response.text();
+    state.bodyMapMarkup = markup;
     elements.bodyMapHost.innerHTML = markup;
     const svg = elements.bodyMapHost.querySelector("svg");
     if (svg) {

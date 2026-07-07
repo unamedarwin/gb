@@ -205,7 +205,7 @@ export function buildRoutine(products, state, usageStats) {
     selectedIds.add(candidate.id);
   }
 
-  const explanation = routineExplanation(state, usageStats);
+  const explanation = routineExplanationCompact(state, usageStats);
 
   return {
     duration,
@@ -382,7 +382,7 @@ function routineExplanation(state, usageStats) {
 
   if (state.selectedMuscle !== "all") {
     const label = MUSCLE_GROUPS.find((entry) => entry.id === state.selectedMuscle)?.label || state.selectedMuscle;
-    return `Rutina de ${objectiveLabel} centrada en ${label.toLowerCase()}, evitant repetir massa aviat el que ja has fet.`;
+    return `${objectiveLabel} per ${label.toLowerCase()}.`;
   }
 
   const weakest = Object.entries(usageStats.byMuscleRecent)
@@ -392,10 +392,45 @@ function routineExplanation(state, usageStats) {
     .filter(Boolean);
 
   if (weakest.length > 0) {
-    return `Rutina automatica de ${objectiveLabel} orientada a compensar zones menys treballades recentment: ${weakest.join(" i ")}.`;
+    return `${objectiveLabel} per compensar ${weakest.join(" + ")}.`;
   }
 
   return `Rutina general de ${objectiveLabel} per començar a construir historic i adaptar futures recomanacions.`;
+}
+
+function routineExplanationCompact(state, usageStats) {
+  const objectiveLabel = state.selectedObjective === "strength"
+    ? "forca"
+    : state.selectedObjective === "toning"
+      ? "tonificacio"
+      : state.selectedObjective === "fat-loss"
+        ? "perdua de greix"
+        : state.selectedObjective === "endurance"
+          ? "resistencia"
+          : state.selectedObjective === "mobility"
+            ? "mobilitat"
+            : state.selectedObjective === "recovery"
+              ? "tecnica"
+              : state.selectedObjective === "quick"
+                ? "rapid"
+                : "hipertrofia";
+
+  if (state.selectedMuscle !== "all") {
+    const label = MUSCLE_GROUPS.find((entry) => entry.id === state.selectedMuscle)?.label || state.selectedMuscle;
+    return `${objectiveLabel} per ${label.toLowerCase()}.`;
+  }
+
+  const weakest = Object.entries(usageStats.byMuscleRecent)
+    .sort((left, right) => left[1] - right[1])
+    .slice(0, 2)
+    .map(([muscle]) => MUSCLE_GROUPS.find((entry) => entry.id === muscle)?.label?.toLowerCase())
+    .filter(Boolean);
+
+  if (weakest.length > 0) {
+    return `${objectiveLabel} per compensar ${weakest.join(" + ")}.`;
+  }
+
+  return `${objectiveLabel} general per avui.`;
 }
 
 function suggestWeight(product, usageStats) {
