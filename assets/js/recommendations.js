@@ -247,7 +247,7 @@ function recommendationScore(product, state, usageStats) {
   if (product.equipmentType === "bodyweight" && state.selectedEquipmentType === "all") {
     score += 1;
   }
-  if (product.collections.some((collection) => ["Musculacio", "Diamond", "Hela", "Frey", "Iron Force"].includes(collection))) {
+  if (product.collections.some((collection) => ["Musculació", "Diamond", "Hela", "Frey", "Iron Force"].includes(collection))) {
     score += 2;
   }
 
@@ -269,17 +269,17 @@ function buildReason(product, state, usageStats) {
     .filter(Boolean);
 
   if (laggingByRelativeLoad.length > 0) {
-    return `Ajuda a compensar la carrega relativa de ${laggingByRelativeLoad.join(" i ")}.`;
+    return `Ajuda a compensar la càrrega relativa de ${laggingByRelativeLoad.join(" i ")}.`;
   }
 
   const lastUsed = usageStats.lastUsedDays[product.id];
   if (lastUsed === undefined) {
-    return "Encara no apareix al teu historic i ajuda a ampliar varietat.";
+    return "Encara no apareix al teu històric i ajuda a ampliar varietat.";
   }
   if (lastUsed >= 10) {
     return "Fa dies que no la treballes i va be per reactivar-la.";
   }
-  return "Es mante equilibrada respecte al teu historic recent.";
+  return "Es manté equilibrada respecte al teu històric recent.";
 }
 
 function suggestPrescription(product, duration, objective) {
@@ -370,19 +370,19 @@ function suggestPrescription(product, duration, objective) {
 
 function routineExplanation(state, usageStats) {
   const objectiveLabel = state.selectedObjective === "strength"
-    ? "forca"
+    ? "força"
     : state.selectedObjective === "toning"
       ? "tonificacio"
       : state.selectedObjective === "fat-loss"
-        ? "perdua de greix"
+        ? "pèrdua de greix"
     : state.selectedObjective === "endurance"
       ? "resistencia"
       : state.selectedObjective === "mobility"
         ? "mobilitat"
       : state.selectedObjective === "recovery"
-        ? "tecnica i recuperacio"
+        ? "tècnica i recuperació"
         : state.selectedObjective === "quick"
-          ? "rutina rapida"
+          ? "rutina ràpida"
         : "hipertrofia";
 
   const selectedLabels = selectedMuscleLabels(state.selectedMuscle);
@@ -400,24 +400,24 @@ function routineExplanation(state, usageStats) {
     return `${objectiveLabel} per compensar ${weakest.join(" + ")}.`;
   }
 
-  return `Rutina general de ${objectiveLabel} per començar a construir historic i adaptar futures recomanacions.`;
+  return `Rutina general de ${objectiveLabel} per començar a construir històric i adaptar futures recomanacions.`;
 }
 
 function routineExplanationCompact(state, usageStats) {
   const objectiveLabel = state.selectedObjective === "strength"
-    ? "forca"
+    ? "força"
     : state.selectedObjective === "toning"
       ? "tonificacio"
       : state.selectedObjective === "fat-loss"
-        ? "perdua de greix"
+        ? "pèrdua de greix"
         : state.selectedObjective === "endurance"
           ? "resistencia"
           : state.selectedObjective === "mobility"
             ? "mobilitat"
             : state.selectedObjective === "recovery"
-              ? "tecnica"
+              ? "tècnica"
               : state.selectedObjective === "quick"
-                ? "rapid"
+                ? "ràpid"
                 : "hipertrofia";
 
   const selectedLabels = selectedMuscleLabels(state.selectedMuscle);

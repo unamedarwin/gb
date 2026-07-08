@@ -28,7 +28,7 @@ export const BODYWEIGHT_EXERCISES = [
     title: "Lunge enrere",
     muscleGroups: ["legs", "glutes", "hamstrings", "core"],
     difficulty: "Mitja",
-    description: "Pas enrere controlat per treball unilateral de cames i estabilitat.",
+    description: "Pas enrere controlat per treball unilateral de camés i estabilitat.",
     image: "assets/illustrations/bodyweight/lucide-person-standing.svg"
   },
   {
@@ -68,7 +68,7 @@ export const BODYWEIGHT_EXERCISES = [
     title: "Superman",
     muscleGroups: ["back", "glutes", "core"],
     difficulty: "Baixa",
-    description: "Extensio posterior a terra per reforcar esquena i glutis.",
+    description: "Extensio posterior a terra per reforçar esquena i glutis.",
     image: "assets/illustrations/bodyweight/lucide-activity.svg"
   },
   {
@@ -76,7 +76,7 @@ export const BODYWEIGHT_EXERCISES = [
     title: "Curl amb banda",
     muscleGroups: ["biceps"],
     difficulty: "Baixa",
-    description: "Opcio simple per treball de biceps sense dependre de maquinaria.",
+    description: "Opcio simple per treball de biceps sense dependre de maquinària.",
     image: "assets/illustrations/bodyweight/lucide-dumbbell.svg"
   },
   {

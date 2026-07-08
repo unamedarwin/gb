@@ -188,13 +188,13 @@ export function buildProgressionHint(profile, suggestedWeightKg) {
   if (profile.progressionMode === "duration") {
     return profile.growthPotential === "low"
       ? "Tanca el rang i afegeix 5-10 s abans de complicar la variant."
-      : "Tanca el rang i afegeix 10-20 s o una variant mes exigent.";
+      : "Tanca el rang i afegeix 10-20 s o una variant més exigent.";
   }
 
   if (profile.progressionMode === "reps") {
     return profile.growthPotential === "high"
-      ? "Tanca el rang alt i despres afegeix carrega externa o una variant mes dura."
-      : "Tanca el rang alt i despres passa a una variant mes exigent.";
+      ? "Tanca el rang alt i desprús afegeix càrrega externa o una variant més dura."
+      : "Tanca el rang alt i desprús passa a una variant més exigent.";
   }
 
   if (profile.loadSystem === "plate_loaded" && typeof suggestedWeightKg === "number") {
@@ -207,10 +207,10 @@ export function buildProgressionHint(profile, suggestedWeightKg) {
   }
 
   if (typeof suggestedWeightKg === "number" && profile.stepKg > 0) {
-    return `Si completes totes les series, puja ${formatStep(profile.stepKg)} al seguent esglao.`;
+    return `Si completes totes les series, puja ${formatStep(profile.stepKg)} al seguent esglaó.`;
   }
 
-  return "Comenca conservador i puja d'esglao quan tanquis el rang amb tecnica neta.";
+  return "Comença conservador i puja d'esglaó quan tanquis el rang amb tècnica neta.";
 }
 
 export function labelForFamily(family) {
@@ -238,7 +238,7 @@ export function labelForLoadSystem(loadSystem) {
     bodyweight: "pes corporal",
     custom: "personalitzat"
   };
-  return labels[loadSystem] || "carrega";
+  return labels[loadSystem] || "càrrega";
 }
 
 export function buildProportionalityMeta(normalizedAveragesByMuscle, normalizedEntries) {

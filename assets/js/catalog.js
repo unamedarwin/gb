@@ -4,7 +4,7 @@ import { inferLoadMetadata } from "./proportionality.js";
 
 const INSTRUCTION_SECTION_ORDER = ["configuration", "adjustments", "ergonomics", "exercise", "placard", "qr", "safety"];
 const INSTRUCTION_SECTION_LABELS = {
-  configuration: "Configuracio",
+  configuration: "Configuració",
   adjustments: "Ajustos",
   ergonomics: "Postura",
   exercise: "Treballa",
@@ -73,7 +73,7 @@ async function fetchCollectionProducts(provider, handle) {
   while (true) {
     const response = await fetch(`${provider.baseUrl}/collections/${handle}/products.json?limit=250&page=${page}`);
     if (!response.ok) {
-      throw new Error(`No s'ha pogut carregar la col.leccio ${handle}`);
+      throw new Error(`No s'ha pogut carregar la col·leccio ${handle}`);
     }
     const payload = await response.json();
     products.push(...payload.products);
@@ -163,7 +163,7 @@ function deriveSeries(collection, title) {
 
 function summarizeDescription(text) {
   if (!text) {
-    return "Fitxa disponible des del cataleg public d'F&H Fitness.";
+    return "Fitxa disponible des del catàleg públic d'F&H Fitness.";
   }
   return text.length > 160 ? `${text.slice(0, 157).trim()}...` : text;
 }
@@ -287,7 +287,7 @@ function detectInstructionSection(title) {
   if (!comparable) {
     return "";
   }
-  if (/(configuracion|configuracion|configuracio)/.test(comparable)) {
+  if (/(configuración|configuración|configuració)/.test(comparable)) {
     return "configuration";
   }
   if (/(ajustes|ajuste|regulacion|regulable)/.test(comparable)) {
@@ -296,7 +296,7 @@ function detectInstructionSection(title) {
   if (/(ergonomia|postura|angulo de trabajo)/.test(comparable)) {
     return "ergonomics";
   }
-  if (/(caracteristicas|ejercicio|grupo muscular)/.test(comparable)) {
+  if (/(caracteristicas|ejercicio|grupo múscular)/.test(comparable)) {
     return "exercise";
   }
   if (/(pictograma|etiqueta)/.test(comparable)) {
@@ -367,7 +367,7 @@ function normalizeText(value) {
 }
 
 function pickSeries(current, next) {
-  return current && current !== "Musculacio" ? current : next;
+  return current && current !== "Musculació" ? current : next;
 }
 
 function pickEquipmentType(current, next) {

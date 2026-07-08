@@ -92,8 +92,8 @@ export function renderTodayPlanView({
   if (!renderPlan) {
     elements.todayPlanSummary.textContent = "Sense proposta directa amb aquest context.";
     elements.todayPlanCurrent.innerHTML = `
-      <strong>Cap sessio preparada</strong>
-      <span>Canvia el focus o passa a una ruta que no depengui del cataleg.</span>
+      <strong>Cap sessió preparada</strong>
+      <span>Canvia el focus o passa a una ruta que no depengui del catàleg.</span>
     `;
     elements.todayPlanStart.disabled = true;
     elements.todayPlanStart.hidden = true;
@@ -122,7 +122,7 @@ export function renderTodayPlanView({
     ? `${renderPlan.totalSteps} passos - ${renderPlan.totalEstimatedMinutes} min - ${completedCount} fets${skippedCount ? ` - ${skippedCount} saltats` : ""}`
     : `${renderPlan.totalSteps} passos - ${renderPlan.totalEstimatedMinutes} min - ${routine.explanation}`;
 
-  elements.todayPlanStart.textContent = hasStartedPlan ? "Continua sessio guiada" : "Comenca sessio guiada";
+  elements.todayPlanStart.textContent = hasStartedPlan ? "Continua sessió guiada" : "Comença sessió guiada";
   elements.todayPlanStart.disabled = false;
   elements.todayPlanStart.hidden = Boolean(hasStartedPlan && currentStep);
   elements.todayPlanLog.disabled = !currentStep;
@@ -147,8 +147,8 @@ export function renderTodayPlanView({
 
   if (!currentStep) {
     elements.todayPlanCurrent.innerHTML = `
-      <strong>Sessio del dia completada</strong>
-      <span>Tot fet. Pots revisar l'historic o recalcular.</span>
+      <strong>Sessió del dia completada</strong>
+      <span>Tot fet. Pots revisar l'històric o recalcular.</span>
     `;
     elements.todayPlanStart.hidden = true;
     elements.todayPlanLog.hidden = true;
@@ -163,7 +163,7 @@ export function renderTodayPlanView({
   }
 
   const nextAlternative = currentStep.alternativeOptions?.[0];
-  const stationLabel = currentStep.equipmentType === "bodyweight" ? "a l'estacio" : "a la maquina";
+  const stationLabel = currentStep.equipmentType === "bodyweight" ? "a l'estació" : "a la màquina";
   const pieces = [
     `<strong>Pas ${currentStep.position}/${currentStep.totalSteps}: ${escapeHtml(currentStep.title)}</strong>`,
     `<span>${escapeHtml(currentStep.prescription || "Sense rang calculat")} - ${formatMinutes(currentStep.stationMinutes)} ${stationLabel} - ${formatTransition(currentStep.transitionSeconds)}</span>`,
@@ -171,7 +171,7 @@ export function renderTodayPlanView({
     nextAlternative
       ? `<span>Alternativa semblant: ${escapeHtml(nextAlternative.title)}.</span>`
       : canHideCurrentMachine
-        ? `<span>Si no hi es al teu gimnas, l'amaguem i reconfigurem la sessio.</span>`
+        ? `<span>Si no hi és al teu gimnús, l'amaguem i reconfigurem la sessió.</span>`
         : `<span>Sense alternativa directa.</span>`
   ].filter(Boolean);
   elements.todayPlanCurrent.innerHTML = pieces.join("");
@@ -187,7 +187,7 @@ export function buildGuidedPlanCardFragment(step, isCurrent, helpers) {
   metaRow.className = "tag-row";
   metaRow.innerHTML = [
     `<span class="tag">Pas ${step.position}/${step.totalSteps}</span>`,
-    `<span class="tag">${helpers.formatMinutes(step.stationMinutes)} maquina</span>`,
+    `<span class="tag">${helpers.formatMinutes(step.stationMinutes)} màquina</span>`,
     `<span class="tag">${helpers.formatTransition(step.transitionSeconds)}</span>`,
     step.status === "done"
       ? "<span class=\"tag\">Fet</span>"
@@ -525,7 +525,7 @@ function renderTodayPlanAlternativesView({ elements, currentStep, formatSuggeste
       <div class="alt-swap-card__body">
         <strong>${escapeHtml(option.title)}</strong>
         <span>${escapeHtml(buildMachineActionSummary(option, pickPrimaryMuscle(option.muscleGroups)))}</span>
-        <span>${escapeHtml(option.prescription || formatSuggestedWeightCompact(option) || "Canvia aquesta maquina")}</span>
+        <span>${escapeHtml(option.prescription || formatSuggestedWeightCompact(option) || "Canvia aquestà màquina")}</span>
       </div>
     </button>
   `).join("");
@@ -547,7 +547,7 @@ function buildGuidedPlanAlternativeRail(step, helpers) {
           <div class="alt-swap-card__body">
             <strong>${helpers.escapeHtml(option.title)}</strong>
             <span>${helpers.escapeHtml(helpers.buildMachineActionSummary(option, pickPrimaryMuscle(option.muscleGroups)))}</span>
-            <span>${helpers.escapeHtml(option.prescription || helpers.formatSuggestedWeightCompact(option) || "Canvia aquesta maquina")}</span>
+            <span>${helpers.escapeHtml(option.prescription || helpers.formatSuggestedWeightCompact(option) || "Canvia aquestà màquina")}</span>
           </div>
         </button>
       `).join("")}

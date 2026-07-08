@@ -32,7 +32,7 @@ export function buildMachineCardFragment(product, options, ctx) {
   focusLabel.textContent = buildMachineActionSummary(product, primaryMuscle);
   cue.textContent = buildMachineCue(product, primaryMuscle);
   muscleMap.innerHTML = buildMuscleAvatarMarkup(primaryMuscle, product.muscleGroups || []);
-  muscleMap.setAttribute("aria-label", `Muscul principal ${labelForMuscle(primaryMuscle)}`);
+  muscleMap.setAttribute("aria-label", `Múscul principal ${labelForMuscle(primaryMuscle)}`);
   description.textContent = buildCardDescription(product, options, primaryMuscle, ctx);
   link.hidden = !product.sourceUrl;
   if (product.sourceUrl) {
@@ -47,10 +47,10 @@ export function buildMachineCardFragment(product, options, ctx) {
   } else {
     link.removeAttribute("href");
   }
-  toggle.textContent = options.hiddenMode ? "Recupera" : "No hi es";
+  toggle.textContent = options.hiddenMode ? "Recupera" : "No hi és";
   toggle.hidden = !canToggleAvailability || readOnly;
   logButton.hidden = options.hiddenMode || readOnly;
-  logButton.textContent = ctx.hasActiveSession ? "Afegeix a sessio" : "Feta avui";
+  logButton.textContent = ctx.hasActiveSession ? "Afegeix a sessió" : "Feta avui";
 
   if (canToggleAvailability && !readOnly) {
     toggle.addEventListener("click", () => ctx.toggleMachine(product.id, options.hiddenMode));
@@ -90,14 +90,14 @@ export function renderMachineSheetView(elements, product, sheet, escapeHtml) {
       <div class="sheet-placard__hero">
         <p class="sheet-placard__eyebrow">Etiqueta resumida</p>
         <h4>${escapeHtml(sheet.title || product.title)}</h4>
-        <p class="sheet-placard__caption">Fragment extret de la fitxa publica d'F&amp;H per ensenyar nomes la part operativa.</p>
+        <p class="sheet-placard__caption">Fragment extret de la fitxa pública d'F&amp;H per ensenyar només la part operativa.</p>
       </div>
       <div class="tag-row sheet-placard__tags">
         <span class="tag">${escapeHtml(labelForEquipmentType(product.equipmentType))}</span>
         ${muscleTags}
       </div>
       <div class="sheet-placard__grid">
-        ${sections || `<article class="sheet-placard__section"><h4>Fitxa</h4><p>No hem pogut resumir cap instruccio concreta en aquesta maquina.</p></article>`}
+        ${sections || `<article class="sheet-placard__section"><h4>Fitxa</h4><p>No hem pogut resumir cap instrucció concreta en aquestà màquina.</p></article>`}
       </div>
     </section>
   `;
@@ -122,13 +122,13 @@ export function supportsAvailabilityToggle(product) {
 
 export function labelForEquipmentType(type) {
   if (type === "machine") {
-    return "Maquina";
+    return "Màquina";
   }
   if (type === "free-weight") {
     return "Pes lliure";
   }
   if (type === "bodyweight") {
-    return "Sense maquines";
+    return "Sense màquines";
   }
   if (type === "custom") {
     return "Pla propi";
@@ -218,13 +218,13 @@ function hydrateCardGallery({ gallery, galleryDots, galleryPrev, galleryNext, pr
 function buildMachineCue(product, primaryMuscle) {
   const normalized = normalizeLookupText(`${product.title} ${product.handle || ""}`);
   if (product.equipmentType === "bodyweight") {
-    return "Controla el rang, mantingues tecnica neta i evita l'impuls.";
+    return "Controla el rang, mantingues tècnica neta i evita l'impuls.";
   }
   if (normalized.includes("press") || normalized.includes("bench") || normalized.includes("pec")) {
     return "Ajusta el seient i empeny amb recorregut controlat.";
   }
   if (normalized.includes("row") || normalized.includes("remo") || normalized.includes("pulldown") || normalized.includes("lat")) {
-    return "Pit obert, tracciona cap a tu i controla la tornada.";
+    return "Pit obert, traccióna cap a tu i controla la tornada.";
   }
   if (normalized.includes("curl")) {
     return "Mou el colze sense balancejar el tronc.";
@@ -251,7 +251,7 @@ function buildMachineCue(product, primaryMuscle) {
 
 function inferMachineAction(normalizedTitle, primaryMuscle, equipmentType) {
   if (equipmentType === "bodyweight") {
-    return "Exercici sense maquina";
+    return "Exercici sense màquina";
   }
   if (primaryMuscle === "cardio") {
     return "Treball cardiovascular";
@@ -289,7 +289,7 @@ function inferMachineAction(normalizedTitle, primaryMuscle, equipmentType) {
   if (normalizedTitle.includes("ab") || normalizedTitle.includes("crunch") || normalizedTitle.includes("core")) {
     return "Treball de core";
   }
-  return primaryMuscle === "all" ? "Maquina guiada" : `Treball de ${labelForMuscle(primaryMuscle).toLowerCase()}`;
+  return primaryMuscle === "all" ? "Màquina guiada" : `Treball de ${labelForMuscle(primaryMuscle).toLowerCase()}`;
 }
 
 function buildCardDescription(product, options, primaryMuscle, ctx) {
@@ -309,7 +309,7 @@ function buildCardDescription(product, options, primaryMuscle, ctx) {
     return detail;
   }
   if (options.showPrescription) {
-    return buildSecondaryMuscleSummary(product.muscleGroups, primaryMuscle) || "Ajusta pes i manten tecnica neta.";
+    return buildSecondaryMuscleSummary(product.muscleGroups, primaryMuscle) || "Ajusta pes i manten tècnica neta.";
   }
   return ctx.trimSentence(product.description, 96) || `Treball principal ${labelForMuscle(primaryMuscle).toLowerCase()}.`;
 }

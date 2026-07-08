@@ -89,7 +89,7 @@ export function selectedMuscleFilterLabel(selection = ["all"]) {
 export function selectedMuscleFilterCopy(selection = ["all"]) {
   const selected = getSelectedMuscleIds(selection);
   if (selected.length === 0) {
-    return "Vista general per construir la sessio.";
+    return "Vista general per construir la sessió.";
   }
   if (selected.length <= 3) {
     return selected.map((muscleId) => labelForMuscle(muscleId).toLowerCase()).join(" / ");

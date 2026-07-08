@@ -19,7 +19,7 @@ export const CATALOG_PROVIDERS = [
     label: "F&H Fitness",
     baseUrl: "https://fyhfitness.com",
     collections: [
-      { handle: "musculacion", label: "Musculacio", equipmentType: "machine", family: "strength" },
+      { handle: "musculacion", label: "Musculació", equipmentType: "machine", family: "strength" },
       { handle: "hela", label: "Hela", equipmentType: "machine", family: "strength" },
       { handle: "fred", label: "Frey", equipmentType: "machine", family: "strength" },
       { handle: "diamond", label: "Diamond", equipmentType: "machine", family: "strength" },
@@ -95,13 +95,13 @@ export const DURATION_OPTIONS = [
 
 export const OBJECTIVE_OPTIONS = [
   { id: "hypertrophy", label: "Hipertrofia" },
-  { id: "strength", label: "Forca" },
+  { id: "strength", label: "Força" },
   { id: "toning", label: "Tonificacio" },
   { id: "fat-loss", label: "Perdua de greix" },
   { id: "endurance", label: "Resistencia" },
   { id: "mobility", label: "Mobilitat" },
-  { id: "recovery", label: "Tecnica / recuperacio" },
-  { id: "quick", label: "Rutina rapida" }
+  { id: "recovery", label: "Tècnica / recuperació" },
+  { id: "quick", label: "Rutina ràpida" }
 ];
 
 export const MUSCLE_RULES = {

@@ -80,23 +80,23 @@ const state = {
 };
 
 const SECTION_CONTEXT = {
-  "section-discover": { progress: 16, text: "Panell curt: avui, registre i sessio en marxa." },
-  "section-recommendations": { progress: 44, text: "Si hi ha proposta, entra; si no, salta a un fallback practic." },
+  "section-discover": { progress: 16, text: "Panell curt: avui, registre i sessió en marxa." },
+  "section-recommendations": { progress: 44, text: "Si hi ha proposta, entra; si no, salta a un fallback pràctic." },
   "section-weekly": { progress: 66, text: "Veu que falta i corregeix la setmana amb una sortida clara." },
-  "section-planner": { progress: 58, text: "Afegeix nomes el minim i deixa el dia preparat." },
-  "section-bodyweight": { progress: 36, text: "Entrena avui sense dependre del cataleg del gimnas." },
+  "section-planner": { progress: 58, text: "Afegeix només el mínim i deixa el dia preparat." },
+  "section-bodyweight": { progress: 36, text: "Entrena avui sense dependre del catàleg del gimnús." },
   "section-catalog": { progress: 24, text: "Marca parc real i neteja futures recomanacions." },
-  "section-hidden": { progress: 28, text: "Recupera maquines amagades si el gimnas canvia." },
+  "section-hidden": { progress: 28, text: "Recupera màquines amagades si el gimnús canvia." },
   "section-timers": { progress: 60, text: "Temps i descans sense sortir del flux d'entrenament." },
-  "section-log": { progress: 74, text: "Registre express amb el minim de decisions possibles." },
-  "section-session": { progress: 80, text: "Continua, tanca o reaprofita la sessio viva." },
-  "section-history": { progress: 88, text: "Progres recent, calendari i equilibri corporal." }
+  "section-log": { progress: 74, text: "Registre express amb el mínim de decisións possibles." },
+  "section-session": { progress: 80, text: "Continua, tanca o reaprofita la sessió viva." },
+  "section-history": { progress: 88, text: "Progrés recent, calendari i equilibri corporal." }
 };
 
 const GYM_AREA_OPTIONS = [
   { value: "", label: "Selecciona zona o equip" },
-  { value: "Maquina guiada", label: "Maquina guiada" },
-  { value: "Maquina de discs", label: "Maquina de discs" },
+  { value: "Màquina guiada", label: "Màquina guiada" },
+  { value: "Màquina de discs", label: "Màquina de discs" },
   { value: "Cable / politja", label: "Cable / politja" },
   { value: "Pes corporal", label: "Pes corporal" },
   { value: "Mancuernes", label: "Mancuernes" },
@@ -134,14 +134,14 @@ const REP_SELECT_OPTIONS = [
 
 const NOTE_SELECT_OPTIONS = [
   { value: "", label: "Sense nota" },
-  { value: "Tecnica controlada", label: "Tecnica controlada" },
-  { value: "Ultima serie dura", label: "Ultima serie dura" },
+  { value: "Tècnica controlada", label: "Tècnica controlada" },
+  { value: "última serie dura", label: "última serie dura" },
   { value: "RIR 2 aprox.", label: "RIR 2 aprox." },
   { value: "Descans curt", label: "Descans curt" },
   { value: "Descans llarg", label: "Descans llarg" },
   { value: "Sense dolor", label: "Sense dolor" },
   { value: "Core ferm", label: "Core ferm" },
-  { value: "Puja pes la proxima", label: "Puja pes la proxima" },
+  { value: "Puja pes la pròxima", label: "Puja pes la pròxima" },
   { value: "Baixa pes i prioritza rang", label: "Baixa pes i prioritza rang" }
 ];
 
@@ -151,22 +151,22 @@ const EXERCISE_TEMPLATE_OPTIONS = [
   {
     id: "machine-chest-press",
     name: "Chest press guiat",
-    gymArea: "Maquina guiada",
+    gymArea: "Màquina guiada",
     primaryMuscle: "chest",
     secondaryMuscles: ["triceps", "shoulders"],
     sets: "3",
     reps: "8-12",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "machine-pec-deck",
     name: "Pec deck",
-    gymArea: "Maquina guiada",
+    gymArea: "Màquina guiada",
     primaryMuscle: "chest",
     secondaryMuscles: ["shoulders"],
     sets: "3",
     reps: "10-15",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "bodyweight-push-up",
@@ -186,17 +186,17 @@ const EXERCISE_TEMPLATE_OPTIONS = [
     secondaryMuscles: ["biceps"],
     sets: "3",
     reps: "8-12",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "machine-seated-row",
     name: "Rem assegut",
-    gymArea: "Maquina guiada",
+    gymArea: "Màquina guiada",
     primaryMuscle: "back",
     secondaryMuscles: ["biceps"],
     sets: "3",
     reps: "8-12",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "bodyweight-band-row",
@@ -211,12 +211,12 @@ const EXERCISE_TEMPLATE_OPTIONS = [
   {
     id: "machine-shoulder-press",
     name: "Shoulder press",
-    gymArea: "Maquina guiada",
+    gymArea: "Màquina guiada",
     primaryMuscle: "shoulders",
     secondaryMuscles: ["triceps"],
     sets: "3",
     reps: "8-12",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "machine-lateral-raise",
@@ -226,7 +226,7 @@ const EXERCISE_TEMPLATE_OPTIONS = [
     secondaryMuscles: ["core"],
     sets: "3",
     reps: "12-15",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "machine-biceps-curl",
@@ -236,7 +236,7 @@ const EXERCISE_TEMPLATE_OPTIONS = [
     secondaryMuscles: [],
     sets: "3",
     reps: "10-15",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "bodyweight-band-curl",
@@ -246,7 +246,7 @@ const EXERCISE_TEMPLATE_OPTIONS = [
     secondaryMuscles: [],
     sets: "3",
     reps: "10-15",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "machine-triceps-pushdown",
@@ -256,7 +256,7 @@ const EXERCISE_TEMPLATE_OPTIONS = [
     secondaryMuscles: [],
     sets: "3",
     reps: "10-15",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "bodyweight-chair-dips",
@@ -266,17 +266,17 @@ const EXERCISE_TEMPLATE_OPTIONS = [
     secondaryMuscles: ["shoulders", "chest"],
     sets: "3",
     reps: "6-10",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "machine-leg-press",
     name: "Leg press",
-    gymArea: "Maquina guiada",
+    gymArea: "Màquina guiada",
     primaryMuscle: "legs",
     secondaryMuscles: ["glutes"],
     sets: "3",
     reps: "10-15",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "bodyweight-air-squat",
@@ -296,17 +296,17 @@ const EXERCISE_TEMPLATE_OPTIONS = [
     secondaryMuscles: ["glutes", "core"],
     sets: "3",
     reps: "8-12",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "machine-leg-curl",
     name: "Curl femoral",
-    gymArea: "Maquina guiada",
+    gymArea: "Màquina guiada",
     primaryMuscle: "hamstrings",
     secondaryMuscles: ["glutes"],
     sets: "3",
     reps: "10-15",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "bodyweight-hamstring-walkout",
@@ -326,7 +326,7 @@ const EXERCISE_TEMPLATE_OPTIONS = [
     secondaryMuscles: ["hamstrings", "core"],
     sets: "3",
     reps: "8-12",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "bodyweight-glute-bridge",
@@ -341,12 +341,12 @@ const EXERCISE_TEMPLATE_OPTIONS = [
   {
     id: "machine-calf-raise",
     name: "Elevacio de bessons",
-    gymArea: "Maquina guiada",
+    gymArea: "Màquina guiada",
     primaryMuscle: "calves",
     secondaryMuscles: ["legs"],
     sets: "3",
     reps: "12-20",
-    notes: "Tecnica controlada"
+    notes: "Tècnica controlada"
   },
   {
     id: "bodyweight-plank",
@@ -568,7 +568,7 @@ export async function boot() {
   paintSyncMeta(meta);
 
   if (products.length > 0) {
-    setProgress(100, "Cataleg recuperat del dispositiu.");
+    setProgress(100, "Catàleg recuperat del dispositiu.");
   } else {
     setProgress(0, "Pots entrenar ara mateix.");
   }
@@ -602,10 +602,10 @@ function bindEvents() {
   elements.exerciseForm.addEventListener("change", handleExerciseFormChange);
   elements.exerciseCustomName?.addEventListener("input", updatePlannerSubmitState);
   elements.plannerModeActions?.addEventListener("click", handlePlannerModeClick);
-  elements.completedSessionForm?.addEventListener("submit", handleCompletedSessionFormSubmit);
-  elements.completedSessionForm?.addEventListener("input", handleCompletedSessionFormInput);
-  elements.completedSessionForm?.addEventListener("change", handleCompletedSessionFormInput);
-  elements.completedSessionForm?.addEventListener("click", handleCompletedSessionFormClick);
+  elements.completedSessionForm.addEventListener("submit", handleCompletedSessionFormSubmit);
+  elements.completedSessionForm.addEventListener("input", handleCompletedSessionFormInput);
+  elements.completedSessionForm.addEventListener("change", handleCompletedSessionFormInput);
+  elements.completedSessionForm.addEventListener("click", handleCompletedSessionFormClick);
   elements.completedSessionCancel?.addEventListener("click", closeCompletedSessionEditor);
   elements.completedSessionDelete?.addEventListener("click", handleCompletedSessionDelete);
   elements.sessionStart.addEventListener("click", startSessionTimer);
@@ -992,8 +992,8 @@ function renderFirstUseWizard() {
 
   const hasCatalog = state.products.length > 0;
   elements.firstUseCopy.textContent = hasCatalog
-    ? "Cataleg local llest. Tria ruta."
-    : "Entrena ara o afegeix cataleg.";
+    ? "Catàleg local llest. Tria ruta."
+    : "Entrena ara o afegeix catàleg.";
 }
 
 async function handleFirstUseAction(event) {
@@ -1099,7 +1099,7 @@ async function syncCatalog() {
 
   state.syncInProgress = true;
   setBusyState();
-  setProgress(0, "Sincronitzant cataleg public d'F&H...");
+  setProgress(0, "Sincronitzant catàleg públic d'F&H...");
 
   try {
     const products = await fetchCatalogWithProgress((completed, total, label) => {
@@ -1112,7 +1112,7 @@ async function syncCatalog() {
       lastSyncedAt: new Date().toISOString(),
       productCount: products.length,
       syncVersion: SYNC_VERSION,
-      source: "F&H Shopify public API"
+      source: "F&H Shopify públic API"
     };
     await writeMeta(meta);
 
@@ -1120,7 +1120,7 @@ async function syncCatalog() {
     recomputeDerivedState();
     renderAll();
     paintSyncMeta(meta);
-    setProgress(100, `Cataleg sincronitzat: ${products.length} fitxes guardades al dispositiu.`);
+    setProgress(100, `Catàleg sincronitzat: ${products.length} fitxes guardades al dispositiu.`);
 
     const cacheMeta = await readMeta("image-cache");
     if (!cacheMeta || cacheMeta.cachedCount === 0) {
@@ -1128,8 +1128,8 @@ async function syncCatalog() {
     }
   } catch (error) {
     console.error(error);
-    setProgress(0, "No s'ha pogut sincronitzar el cataleg.");
-    elements.catalogStatus.textContent = "Error de sincronitzacio";
+    setProgress(0, "No s'ha pogut sincronitzar el catàleg.");
+    elements.catalogStatus.textContent = "Error de sincronització";
   } finally {
     state.syncInProgress = false;
     setBusyState();
@@ -1158,7 +1158,7 @@ async function cacheAllImages(products) {
         }
       }
       completed += 1;
-      setProgress(Math.round((completed / urls.length) * 100), `Descarregant imatges al dispositiu (${completed}/${urls.length})`);
+      setProgress(Math.round((completed / urls.length) * 100), `Descàrregant imatges al dispositiu (${completed}/${urls.length})`);
     }
 
     await writeMeta({
@@ -1168,7 +1168,7 @@ async function cacheAllImages(products) {
     });
   } catch (error) {
     console.error(error);
-    setProgress(0, "Hi ha hagut un problema descarregant les imatges.");
+    setProgress(0, "Hi ha hagut un problema descàrregant les imatges.");
   } finally {
     state.imageCacheInProgress = false;
     setBusyState();
@@ -1253,7 +1253,7 @@ function toBodyweightProduct(exercise) {
       (exercise.equipment || []).join(" "),
       (exercise.progressions || []).join(" "),
       (exercise.regressions || []).join(" "),
-      "sense maquines calistenia bodyweight"
+      "sense màquines calistenia bodyweight"
     ].join(" ").toLowerCase(),
     sourceUrl: "",
     updatedAt: "",
@@ -1362,7 +1362,7 @@ function renderRecommendations() {
   if (recommendationPool.length === 0) {
     const machineOnly = state.selectedEquipmentType === "machine" || state.selectedEquipmentType === "free-weight" || state.selectedEquipmentType === "support";
     elements.summaryText.textContent = state.products.length === 0 && machineOnly
-      ? "Sense cataleg local per aquest filtre."
+      ? "Sense catàleg local per aquest filtre."
       : "Cap proposta amb aquest filtre.";
     return;
   }
@@ -1385,7 +1385,7 @@ function renderCatalog() {
       || Boolean(state.searchQuery);
 
     elements.emptyState.textContent = !hasCatalog
-      ? "Encara no hi ha cataleg local."
+      ? "Encara no hi ha catàleg local."
       : hasActiveFilters
         ? "No hi ha resultats amb aquest filtre."
         : "No hi ha fitxes disponibles ara.";
@@ -1401,12 +1401,12 @@ function renderBodyweight() {
 
   elements.bodyweightGrid.innerHTML = "";
   if (state.selectedEquipmentType !== "all" && state.selectedEquipmentType !== "bodyweight") {
-    elements.bodyweightSummary.textContent = "Aquest filtre no encaixa aqui.";
+    elements.bodyweightSummary.textContent = "Aquest filtre no encaixa aquí.";
     return;
   }
 
   elements.bodyweightSummary.textContent = state.usageEvents.length === 0
-    ? `${visible.length} exercicis. Via rapida per avui.`
+    ? `${visible.length} exercicis. Via ràpida per avui.`
     : `${visible.length} exercicis sense material.`;
 
   for (const exercise of visible) {
@@ -1443,8 +1443,8 @@ function renderWeeklyChecklist() {
     const card = document.createElement("div");
     card.className = "weekly-pattern weekly-pattern--empty";
     card.innerHTML = `
-      <strong>Primera setmana util</strong>
-      <span class="summary-text">Comenca per pit, esquena o cames i deixa el mapa en marxa.</span>
+      <strong>Primera setmana útil</strong>
+      <span class="summary-text">Comença per pit, esquena o camés i deixa el mapa en marxa.</span>
       <div class="empty-tag-row">
         ${weekly.items.slice(0, 5).map((item) => `<span class="empty-tag">${escapeHtml(labelForMuscle(item.muscleId))}</span>`).join("")}
       </div>
@@ -1453,8 +1453,8 @@ function renderWeeklyChecklist() {
     elements.weeklyMuscleGrid.append(card);
 
     [
-      "No deixis mes de 2 grups en vermell.",
-      "Amb 1 sessio curta ja desbloqueges lectura real de la setmana."
+      "No deixis més de 2 grups en vermell.",
+      "Amb 1 sessió curta ja desbloqueges lectura real de la setmana."
     ].forEach((text) => {
       const item = document.createElement("div");
       item.className = "history-item";
@@ -1468,8 +1468,8 @@ function renderWeeklyChecklist() {
   const alert = document.createElement("div");
   alert.className = `weekly-alert__pill ${invalid ? "is-invalid" : "is-valid"}`;
   alert.textContent = invalid
-    ? `Setmana invalida: ${weekly.redGroups.length} grups musculars en vermell`
-    : `Setmana valida: ${weekly.redGroups.length} grups musculars en vermell`;
+    ? `Setmana invalida: ${weekly.redGroups.length} grups músculars en vermell`
+    : `Setmana valida: ${weekly.redGroups.length} grups músculars en vermell`;
   elements.weeklyAlert.append(alert);
 
   elements.weeklyStatus.textContent = invalid
@@ -1481,7 +1481,7 @@ function renderWeeklyChecklist() {
     card.className = `weekly-muscle-card is-${item.status}`;
     card.innerHTML = `
       <strong>${escapeHtml(labelForMuscle(item.muscleId))}</strong>
-      <span class="weekly-muscle-card__count">${item.count} registres aquesta setmana</span>
+      <span class="weekly-muscle-card__count">${item.count} registres aquestà setmana</span>
     `;
     elements.weeklyMuscleGrid.append(card);
   }
@@ -1528,7 +1528,7 @@ function renderPlannerFocusMap() {
     elements.plannerFocusCopy.textContent = template
       ? `${labelForMuscle(primary)} com a focus principal.`
       : elements.exerciseTemplate?.value === "__custom__"
-        ? "Activa nomes els camps que realment necessites."
+        ? "Activa només els camps que realment necessites."
         : "La plantilla t'omple la base i tu ajustes.";
   }
 }
@@ -1543,7 +1543,7 @@ function renderLogFocusMap() {
   if (elements.logFocusCopy) {
     elements.logFocusCopy.textContent = context
       ? `${labelForMuscle(pickPrimaryMuscle(context.muscleGroups))} en primer pla.`
-      : "Tens accessos rapids just a sobre.";
+      : "Tens accessos ràpids just a sobre.";
   }
 }
 
@@ -1570,7 +1570,7 @@ function renderWeeklyFocusMap() {
   if (elements.weeklyFocusCopy) {
     elements.weeklyFocusCopy.textContent = pending.length > 0
       ? pending.map((muscle) => labelForMuscle(muscle).toLowerCase()).join(" / ")
-      : "El cos ja te treball registrat aquesta setmana.";
+      : "El cos ja te treball registrat aquestà setmana.";
   }
 }
 
@@ -1703,13 +1703,13 @@ function renderActiveSession() {
   elements.copyLastSession.hidden = Boolean(activeSession) || !latestCompleted;
 
   if (!activeSession) {
-    elements.sessionStatus.textContent = "Cap sessio activa.";
-    elements.activeSessionSummary.textContent = "Quan arrenquis una sessio, el resum surt aqui.";
+    elements.sessionStatus.textContent = "Cap sessió activa.";
+    elements.activeSessionSummary.textContent = "Quan arrenquis una sessió, el resum surt aquí.";
     const empty = document.createElement("div");
     empty.className = "session-item";
     empty.innerHTML = `
       <strong>Cap registre en curs</strong>
-      <span class="session-item__meta">Inicia sessio o guarda un exercici solt.</span>
+      <span class="session-item__meta">Inicia sessió o guarda un exercici solt.</span>
     `;
     elements.activeSessionList.append(empty);
   } else {
@@ -1724,9 +1724,9 @@ function renderActiveSession() {
       return sum + sets * reps * weight;
     }, 0);
 
-    elements.sessionStatus.textContent = `Sessio activa des de ${started.toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" })}`;
+    elements.sessionStatus.textContent = `Sessió activa des de ${started.toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" })}`;
     elements.activeSessionSummary.textContent = copiedEntries.length > 0
-      ? `${loggedEntries.length} exercicis registrats - ${copiedEntries.length} pendents d'una sessio copiada - volum estimat ${Math.round(volume)} kg`
+      ? `${loggedEntries.length} exercicis registrats - ${copiedEntries.length} pendents d'una sessió copiada - volum estimat ${Math.round(volume)} kg`
       : guidedCurrent
         ? `${loggedEntries.length} exercicis registrats - pas actual ${guidedCurrent.position}/${guidedCurrent.totalSteps}: ${guidedCurrent.title} - volum estimat ${Math.round(volume)} kg`
         : `${loggedEntries.length} exercicis registrats - volum estimat ${Math.round(volume)} kg`;
@@ -1748,7 +1748,7 @@ function renderActiveSession() {
     empty.className = "session-item";
     empty.innerHTML = `
       <strong>Sense sessions tancades</strong>
-      <span class="session-item__meta">La primera apareixera aqui.</span>
+      <span class="session-item__meta">La primera apareixerà aquí.</span>
     `;
     elements.completedSessionList.append(empty);
   } else {
@@ -1841,7 +1841,7 @@ function renderCompletedSessionEditor() {
           </select>
         </label>
         <label class="toolbar__field">
-          <span>Musculs</span>
+          <span>Músculs</span>
           <input type="text" value="${escapeHtml((entry.muscleGroups || []).map((muscle) => labelForMuscle(muscle)).join(", "))}" disabled>
         </label>
         <div class="machine-card__actions">
@@ -1970,7 +1970,7 @@ async function handleCompletedSessionDelete(sessionId = state.editingCompletedSe
     return;
   }
 
-  const confirmed = window.confirm(`Esborrar la sessio del ${new Date(target.startedAt).toLocaleDateString("ca-ES")} i els seus registres associats?`);
+  const confirmed = window.confirm(`Esborrar la sessió del ${new Date(target.startedAt).toLocaleDateString("ca-ES")} i els seus registres associats?`);
   if (!confirmed) {
     return;
   }
@@ -2152,7 +2152,7 @@ function handleLogExerciseInput() {
   }
   elements.logFormSubmit.disabled = false;
   elements.logFormStatus.textContent = state.activeSessionId
-    ? `${context.title} llest per a la sessio activa.`
+    ? `${context.title} llest per a la sessió activa.`
     : `${context.title} llest per guardar.`;
   renderFocusMaps();
 }
@@ -2247,8 +2247,8 @@ function openLogForm(context) {
   setSelectValue(elements.logFormNotes, context.defaultNotes || "");
   elements.logFormSubmit.disabled = false;
   elements.logFormStatus.textContent = state.activeSessionId
-    ? `${context.title} anira a la sessio activa.`
-    : `${context.title} anira a l'historic.`;
+    ? `${context.title} anirà a la sessió activa.`
+    : `${context.title} anirà a l'històric.`;
   renderFocusMaps();
   window.dispatchEvent(new CustomEvent("gymbros:navigate", { detail: { sectionId: "section-log" } }));
   requestAnimationFrame(() => {
@@ -2372,7 +2372,7 @@ function renderHistory() {
   }
 
   elements.historySummary.textContent = hasHistory
-    ? `${state.usageStats.total} usos registrats. Recomanacions ajustades al teu historic.`
+    ? `${state.usageStats.total} usos registrats. Recomanacions ajustades al teu històric.`
     : "Sense historial encara. Guarda el primer exercici i crea la primera referencia.";
 
   renderBalanceMap();
@@ -2597,12 +2597,12 @@ function formatSuggestedWeightCompact(product) {
 
 function formatLastWeight(productId) {
   const weight = state.usageStats.lastWeightByProduct[productId]?.weightKg;
-  return typeof weight === "number" ? ` - Ultim pes ${weight} kg` : "";
+  return typeof weight === "number" ? ` - últim pes ${weight} kg` : "";
 }
 
 function formatLastWeightCompact(productId) {
   const weight = state.usageStats.lastWeightByProduct[productId]?.weightKg;
-  return typeof weight === "number" ? `Ultim ${weight} kg` : "";
+  return typeof weight === "number" ? `últim ${weight} kg` : "";
 }
 
 function trimSentence(value, maxLength) {
@@ -2778,7 +2778,7 @@ async function handleTodayPlanOccupied() {
   }
 
   if (!currentStep?.alternativeOptions?.length) {
-    await notifyUser("Sense recanvi directe", `No hem trobat una maquina semblant per a ${currentStep?.title || "aquest pas"}.`);
+    await notifyUser("Sense recanvi directe", `No hem trobat una màquina semblant per a ${currentStep?.title || "aquest pas"}.`);
     return;
   }
 
@@ -2811,7 +2811,7 @@ async function handleTodayPlanHide() {
     : replacementState.skipped > 0
       ? `${replacementState.skipped} pas${replacementState.skipped > 1 ? "s" : ""} sense recanvi directe.`
       : "Ja no la tornarem a proposar.";
-  await notifyUser("Maquina retirada del teu gimnas", summary);
+  await notifyUser("Màquina retirada del teu gimnús", summary);
   renderAll();
 }
 
@@ -2938,7 +2938,7 @@ async function handleTodayPlanSkip() {
   if (nextStep) {
     await notifyUser("Pas saltat", `Seguent: ${nextStep.title}.`);
   } else {
-    await notifyUser("Sessio completada", "No queden mes passos pendents avui.");
+    await notifyUser("Sessió completada", "No queden més passos pendents avui.");
   }
   renderAll();
 }
@@ -2968,7 +2968,7 @@ async function completeGuidedPlanStep(stepId, details) {
   }
   await persistSession(activeSession);
   if (!nextStep) {
-    await notifyUser("Sessio completada", "Has tancat tots els passos del dia.");
+    await notifyUser("Sessió completada", "Has tancat tots els passos del dia.");
     return;
   }
 
@@ -3048,13 +3048,13 @@ function computeWeeklyChecklist() {
   const insights = [];
 
   if (redGroups.length > 0) {
-    insights.push(`Sense treball aquesta setmana: ${redGroups.map((item) => labelForMuscle(item.muscleId).toLowerCase()).join(", ")}.`);
+    insights.push(`Sense treball aquestà setmana: ${redGroups.map((item) => labelForMuscle(item.muscleId).toLowerCase()).join(", ")}.`);
   }
   if (top && bottom && top.count >= bottom.count + 2) {
-    insights.push(`Descompensacio detectada: mes ${labelForMuscle(top.muscleId).toLowerCase()} que ${labelForMuscle(bottom.muscleId).toLowerCase()}.`);
+    insights.push(`Descompensació detectada: més ${labelForMuscle(top.muscleId).toLowerCase()} que ${labelForMuscle(bottom.muscleId).toLowerCase()}.`);
   }
   if (redGroups.length <= 2) {
-    insights.push("La setmana encara compleix la regla antipifia, pero cal vigilar els grups menys treballats.");
+    insights.push("La setmana encara compleix la regla antipifia, però cal vigilar els grups menys treballats.");
   }
 
   return { items, redGroups, insights, eventCount };
@@ -3161,7 +3161,7 @@ function formatMinutes(minutes) {
 
 function formatTransition(seconds) {
   if (!seconds) {
-    return "sense transicio";
+    return "sense transició";
   }
   if (seconds >= 60) {
     return `${round(seconds / 60, 1)} min de canvi`;
@@ -3226,7 +3226,7 @@ function renderBalanceMap() {
 
   elements.balanceSummary.textContent = meta.hasEnoughData
     ? `Mapa ajustat amb factors relatius. Verd fort; vermell endarrerit.`
-    : `Lectura preliminar amb factors relatius. Cal mes historic.`;
+    : `Lectura preliminar amb factors relatius. Cal més històric.`;
 }
 
 function colorForScore(score) {
@@ -3254,13 +3254,13 @@ function labelForConfidence(confidence) {
 
 function labelForObjective(objective) {
   if (objective === "strength") {
-    return "forca";
+    return "força";
   }
   if (objective === "toning") {
     return "tonificacio";
   }
   if (objective === "fat-loss") {
-    return "perdua de greix";
+    return "pèrdua de greix";
   }
   if (objective === "endurance") {
     return "resistencia";
@@ -3269,10 +3269,10 @@ function labelForObjective(objective) {
     return "mobilitat";
   }
   if (objective === "quick") {
-    return "rutina rapida";
+    return "rutina ràpida";
   }
   if (objective === "recovery") {
-    return "tecnica";
+    return "tècnica";
   }
   return "hipertrofia";
 }
@@ -3304,7 +3304,7 @@ function bodyweightPrescription() {
 
 function formatBodyweightDescription(exercise) {
   const prescription = exercise.repsOrDuration || bodyweightPrescription();
-  const safety = exercise.safetyNotes?.[0] || "Prioritza tecnica.";
+  const safety = exercise.safetyNotes?.[0] || "Prioritza tècnica.";
   return `${exercise.description} - ${exercise.sets || "3"} series - ${prescription} - ${safety}`;
 }
 
@@ -3321,7 +3321,7 @@ function labelForMovementPattern(pattern) {
     squat_unilateral: "Squat unilateral",
     hinge: "Hinge",
     anti_extension: "Core anti-extensio",
-    anti_rotation: "Core anti-rotacio",
+    anti_rotation: "Core anti-rotació",
     cardio_core: "Cardio + core",
     cardio_full_body: "Cardio total",
     posterior_chain_lumbar: "Cadena posterior",
@@ -3345,7 +3345,7 @@ function labelForEquipmentSummary(equipment) {
 
 function labelForReplacement(replacement) {
   if (!replacement) {
-    return "Sense maquina";
+    return "Sense màquina";
   }
   return titleCase(replacement.replaceAll("_", " "));
 }
@@ -3366,7 +3366,7 @@ function paintNotificationSupport() {
   }
 
   if (!standalone && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    elements.notificationStatus.textContent = "A iOS, les notificacions completes demanen l'app instal.lada.";
+    elements.notificationStatus.textContent = "A iOS, les notificacións completes demanen l'app instal·lada.";
     return;
   }
 
